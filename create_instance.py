@@ -1,7 +1,9 @@
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
-
+from itertools import chain, product
+import copy
+from operator import itemgetter
 
 def layer(subset_sizes, k):
     # Let layer(v) be the layer assigned to vertex v
@@ -48,12 +50,60 @@ def layer_by_layer(n, p, seed, print_graph=False):
     
     pos = nx.multipartite_layout(G, subset_key="layer")
     nx.draw(G, pos, with_labels=True)
+    plt.show()
 
-    return G, plt
+    return G
 
+def topological_sort_grouped(G):
+    indegree_map = {v: d for v, d in G.in_degree() if d > 0}
+    zero_indegree = [v for v, d in G.in_degree() if d == 0]
+    while zero_indegree:
+        yield zero_indegree
+        new_zero_indegree = []
+        for v in zero_indegree:
+            for _, child in G.edges(v):
+                indegree_map[child] -= 1
+                if not indegree_map[child]:
+                    new_zero_indegree.append(child)
+        zero_indegree = new_zero_indegree
 
-graph_instance, plt = layer_by_layer(10, 0.3, 1)
+def bindings(processors, nodes):
+    return product(*[range(processors)]*nodes)
 
-print(list(nx.topological_sort(graph_instance)))
+def schedule(binding, grouped_top_sort):
+    sched = {}
+    time = 0
+    group_offset = 0
+    for group in grouped_top_sort:
+        group_binding = binding[group_offset : group_offset+len(group)]
+        sorted_group = sorted(list(zip(group, group_binding)), key=itemgetter(1))
+        last_processor = sorted_group[0][1]
+        sched[sorted_group[0][0]] = time
+        for idx, (task, task_binding) in enumerate(sorted_group):
+            if idx == 0:
+                continue
+            if task_binding == last_processor:
+                 time += 1
+            sched[task] = time
+            last_processor = task_binding
+        group_offset += len(group)
+        time += 1
+    return sched
 
+def max_deadlines(graph_instance):
+    bfs = nx.bfs_predecessors(graph_instance)
+    pass
+
+processors, nodes = 4, 32
+
+graph_instance = layer_by_layer(nodes, 0.1, 1)
+# graph_instance = layer_by_layer(nodes, 0.4, 2)
+# graph_instance = layer_by_layer(nodes, 1, 2)
+
+max_deadlines(graph_instance)
+
+grouped_top_sort = list(topological_sort_grouped(graph_instance))
+flat_top_sort = list(chain(*grouped_top_sort))
+task_bindings = bindings(processors, nodes)
+schedule(next(task_bindings), grouped_top_sort)
 print("STOP")
