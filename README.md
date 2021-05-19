@@ -6,3 +6,6 @@ curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poet
 
 ## To install dependencies
 poetry init
+
+## To start virtual enviornment
+poetry shell
