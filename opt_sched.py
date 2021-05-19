@@ -93,8 +93,8 @@ def benchmark(processor_max, node_max, instance_timeout):
             log_solves[(processor_count, node_count)] = solved_count
             next_instance = False
             if(solved_count == 0):
-                return log_solves
-
+                break
+    return log_solves
 
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
