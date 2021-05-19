@@ -82,9 +82,9 @@ def benchmark(processor_max, node_max, instance_timeout):
             solved_count = 0
             cum_solve_time = 0
             while not next_instance:
-                latencies, bindings_solved, solve_time = run_instance_exhaustive(processor_count, node_count, edge_prob=np.random.rand())
+                _, bindings_solved, solve_time = run_instance_exhaustive(processor_count, node_count, edge_prob=np.random.rand())
                 cum_solve_time += solve_time
-                instance_schedules[instance_idx] = latencies
+                # instance_schedules[instance_idx] = latencies
                 if bindings_solved == processor_count**node_count:
                     solved_count += 1
             solved_time_ratio = cum_solve_time/instance_timeout # adjust to exclude generation time
