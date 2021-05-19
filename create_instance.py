@@ -3,16 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from itertools import product
 import config
-from numba import jit
+
+def layer(subset_sizes, target):
+    for layer_idx, subset_size in enumerate(np.cumsum(subset_sizes)):
+        if target <= subset_size:
+            return layer_idx
 
 def layer_by_layer(n, p, seed):
-    
-    def layer(cum_subset_sizes, k):
-        # Let layer(v) be the layer assigned to vertex v
-        for layer_idx, subset_size in enumerate(cum_subset_sizes):
-            if k <= subset_size:
-                return layer_idx
-    
     np.random.seed(seed) # check correct way of seeding 
 
     # Distribute n vertices...
@@ -28,22 +25,9 @@ def layer_by_layer(n, p, seed):
     # Let M be the adjacency matrix nxn initialized as the zero matrix
     M = np.zeros((n,n))
 
-    cum_subset_sizes = np.cumsum(subset_sizes)
-
     for i in range(n):
         for j in range(n):
-            
-            i_layer = 0
-            for layer_idx, subset_size in enumerate(cum_subset_sizes):
-                if i <= subset_size:
-                    i_layer = layer_idx
-
-            j_layer = 0
-            for layer_idx, subset_size in enumerate(cum_subset_sizes):
-                if j <= subset_size:
-                    j_layer = layer_idx
-            
-            if j_layer > i_layer:
+            if layer(subset_sizes, j) > layer(subset_sizes, i):
                 if np.random.rand() < p:
                     M[i][j] = 1
 
@@ -60,7 +44,7 @@ def layer_by_layer(n, p, seed):
     # Add information regarding the layer of each node (for graph purposes) 
     if config.instance_plt:
         for i in range(n):
-            G.nodes[i]['layer'] = layer(cum_subset_sizes, i)
+            G.nodes[i]['layer'] = layer(subset_sizes, i)
         
         pos = nx.multipartite_layout(G, subset_key="layer")
         nx.draw(G, pos, with_labels=True)
