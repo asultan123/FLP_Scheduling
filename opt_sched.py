@@ -75,18 +75,21 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
         graph_instance = layer_by_layer(nodes, edge_prob, config.seed)
         solve_start = time.time()
         grouped_top_sort = list(topological_sort_grouped(graph_instance))
-        latencies = {}
-        solved_count = 0
+        min_max_sched_latency = None
+        opt_sched = None
+        bindings_solved = 0
         nonlocal next_instance
         for selected_binding in bindings(processors, nodes):
             sched = schedule(selected_binding, grouped_top_sort)
-            latencies[solved_count] = (
-                sched, selected_binding, max_latency(sched))
-            solved_count += 1
+            max_latency_sched = max_latency(sched)
+            if min_max_sched_latency is not None and min_max_sched_latency > max_latency_sched:
+                min_max_sched_latency = max_latency_sched
+                opt_sched = sched
+            bindings_solved += 1
             if next_instance:
                 break
         solve_end = time.time()
-        return latencies, solved_count, solve_end-solve_start
+        return (min_max_sched_latency, opt_sched), bindings_solved, solve_end-solve_start
 
     chunk_size = int(iteration_count/worker_count)
     process_idx = int(start_idx/chunk_size)
