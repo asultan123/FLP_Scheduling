@@ -121,6 +121,7 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
             cum_solve_time = 0
             alarm(instance_timeout)
             while not next_instance:
+                # no use in actually getting the optimal schedule because it will not be logged
                 _, bindings_solved, solve_time = run_instance_exhaustive(
                     processor_count, node_count, edge_prob=np.random.rand())
                 cum_solve_time += solve_time
@@ -138,7 +139,7 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
                 if cur_it == 0 or current_processor_upper_bound < processor_min:
                     print("Process {}: defined final upper bound at n:{} m:{} for timeout: {} ... terminating...".format(
                         process_idx, node_count, processor_count, instance_timeout))
-                    return solve_log  
+                    return solve_log
                 if current_processor_upper_bound >= processor_min:
                     print("Process {}: defined upper bound at n:{} m:{} for timeout: {} ... constraining processor upper limit to m:{}".format(
                         process_idx, node_count, processor_count, instance_timeout, current_processor_upper_bound))
@@ -178,6 +179,7 @@ def main():
     with open("benchmark_timeout_{}.bin".format(args.timeout), 'wb') as file:
         import pickle
         pickle.dump(aggregate_solve_log, file)
+
 
 if __name__ == "__main__":
     main()
