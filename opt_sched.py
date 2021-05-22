@@ -104,6 +104,7 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
         process_idx, start_idx))
 
     current_processor_upper_bound = processor_max
+    cur_it = 0
     for node_count in nodes:
         for processor_count in processors:
             if processor_count > current_processor_upper_bound:
@@ -128,18 +129,20 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
             next_instance = False
             if(solved_count == 0):
                 current_processor_upper_bound -= 1
+                if cur_it == 0 or current_processor_upper_bound < processor_min:
+                    print("Process {}: defined final upper bound at n:{} m:{} for timeout: {} ... terminating...".format(
+                        process_idx, node_count, processor_count, instance_timeout))
+                    return solve_log  
                 if current_processor_upper_bound >= processor_min:
                     print("Process {}: defined upper bound at n:{} m:{} for timeout: {} ... constraining processor upper limit to m:{}".format(
                         process_idx, node_count, processor_count, instance_timeout, current_processor_upper_bound))
                     break
-                else:
-                    print("Process {}: defined final upper bound at n:{} m:{} for timeout: {} ... terminating...".format(
-                        process_idx, node_count, processor_count, instance_timeout))
-                    return solve_log
+            cur_it += 1
             with open("proc_{}_timeout_{}.bin".format(process_idx, instance_timeout), 'wb') as file:
                 import pickle
                 pickle.dump(solve_log, file)
-
+    print("Process {}: completed benchmarking ... terminating ".format(
+        process_idx, node_count, processor_count, instance_timeout, current_processor_upper_bound))
     return solve_log
 
 
