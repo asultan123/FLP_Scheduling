@@ -38,20 +38,26 @@ def schedule(binding, grouped_top_sort):
     time = 0
     group_offset = 0
     for group in grouped_top_sort:
+        group_time = time
         group_binding = binding[group_offset: group_offset+len(group)]
         sorted_group = sorted(
             list(zip(group, group_binding)), key=itemgetter(1))
         last_processor = sorted_group[0][1]
-        sched[sorted_group[0][0]] = time
+        sched[sorted_group[0][0]] = group_time
+        max_group_time = 0
         for idx, (task, task_binding) in enumerate(sorted_group):
             if idx == 0:
                 continue
             if task_binding == last_processor:
-                time += 1
-            sched[task] = time
+                group_time += 1
+            else:
+                group_time = time
+            if max_group_time < group_time:
+                max_group_time = group_time
+            sched[task] = group_time
             last_processor = task_binding
         group_offset += len(group)
-        time += 1
+        time += max_group_time+1
     return sched
 
 
