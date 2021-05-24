@@ -11,6 +11,7 @@ from multiprocessing import Pool, Event
 from functools import partial
 from numba import jit
 from pprint import pprint as pp
+import os
 
 def topological_sort_grouped(G):
     indegree_map = {v: d for v, d in G.in_degree() if d > 0}
@@ -161,6 +162,9 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
 
 def main():
     np.random.seed(config.seed)  # check correct way of seeding
+    if not os.path.exists('./Data'):
+        os.makedirs('./Data')
+
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('timeout', type=int)
     args = parser.parse_args()
