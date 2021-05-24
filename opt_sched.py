@@ -12,7 +12,6 @@ from functools import partial
 from numba import jit
 from pprint import pprint as pp
 
-
 def topological_sort_grouped(G):
     indegree_map = {v: d for v, d in G.in_degree() if d > 0}
     zero_indegree = [v for v, d in G.in_degree() if d == 0]
@@ -29,9 +28,6 @@ def topological_sort_grouped(G):
 
 def bindings(processors, nodes):
     return product(*[range(processors)]*nodes)
-
-# @jit(nopython=True)
-
 
 def schedule(binding, grouped_top_sort):
     sched = {}
@@ -64,38 +60,49 @@ def schedule(binding, grouped_top_sort):
 def max_latency(sched):
     return max(sched.values()) + 1
 
-# @jit
-
-
-def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout, worker_count, iteration_count, start_idx):
-
+class Timeout_Monitor:
     next_instance = False
+    @classmethod
+    def get_handler(cls):
+        return partial(Timeout_Monitor.set_state, cls)
+    @classmethod
+    def timeout(cls):
+        return cls.next_instance 
+    @classmethod
+    def reset_state(cls):
+        cls.next_instance = False
+    @classmethod
+    def set_state(cls, *args):
+        cls.next_instance = True
+    @classmethod
+    def register_signal(cls):
+        signal(SIGALRM, cls.get_handler())
+    @classmethod
+    def set_alarm(cls, timeout):
+        alarm(timeout)
 
-    def next_binding(signo, frame):
-        nonlocal next_instance
-        next_instance = True
+def run_instance_exhaustive(graph_instance, processors, nodes, monitor):
+    solve_start = time.time()
+    grouped_top_sort = list(topological_sort_grouped(graph_instance))
+    opt_sched_latency = None
+    opt_sched = None
+    bindings_solved = 0
+    for selected_binding in bindings(processors, nodes):
+        sched = schedule(selected_binding, grouped_top_sort)
+        max_latency_sched = max_latency(sched)
+        if opt_sched_latency is not None and opt_sched_latency > max_latency_sched:
+            opt_sched_latency = max_latency_sched
+            opt_sched = sched
+        bindings_solved += 1
+        if monitor.timeout():
+            break
+    solve_end = time.time()
+    return (opt_sched_latency, opt_sched), bindings_solved, solve_end-solve_start
 
-    signal(SIGALRM, next_binding)
+def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout, worker_count, iteration_count, allow_early_termination, method, start_idx):
 
-    def run_instance_exhaustive(processors, nodes, edge_prob):
-        graph_instance = layer_by_layer(nodes, edge_prob, config.seed)
-        solve_start = time.time()
-        grouped_top_sort = list(topological_sort_grouped(graph_instance))
-        min_max_sched_latency = None
-        opt_sched = None
-        bindings_solved = 0
-        nonlocal next_instance
-        for selected_binding in bindings(processors, nodes):
-            sched = schedule(selected_binding, grouped_top_sort)
-            max_latency_sched = max_latency(sched)
-            if min_max_sched_latency is not None and min_max_sched_latency > max_latency_sched:
-                min_max_sched_latency = max_latency_sched
-                opt_sched = sched
-            bindings_solved += 1
-            if next_instance:
-                break
-        solve_end = time.time()
-        return (min_max_sched_latency, opt_sched), bindings_solved, solve_end-solve_start
+    monitor = Timeout_Monitor()
+    monitor.register_signal()
 
     chunk_size = int(iteration_count/worker_count)
     process_idx = int(start_idx/chunk_size)
@@ -119,11 +126,11 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
                 process_idx, node_count, processor_count))
             solved_count = 0
             cum_solve_time = 0
-            alarm(instance_timeout)
-            while not next_instance:
-                # no use in actually getting the optimal schedule because it will not be logged
-                _, bindings_solved, solve_time = run_instance_exhaustive(
-                    processor_count, node_count, edge_prob=np.random.rand())
+            monitor.reset_state()
+            monitor.set_alarm(instance_timeout)
+            while not monitor.timeout():
+                graph_instance = layer_by_layer(node_count, np.random.rand(), config.seed)
+                _, bindings_solved, solve_time = method(graph_instance, processor_count, node_count, monitor)
                 cum_solve_time += solve_time
                 if bindings_solved == processor_count**node_count:
                     solved_count += 1
@@ -133,8 +140,7 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
             print("Process {}: Solved ~{} instances".format(
                 process_idx, solved_count))
             solve_log[(node_count, processor_count)] = solved_count
-            next_instance = False
-            if(solved_count == 0):
+            if(allow_early_termination and solved_count == 0):
                 current_processor_upper_bound -= 1
                 if cur_it == 0 or current_processor_upper_bound < processor_min:
                     print("Process {}: defined final upper bound at n:{} m:{} for timeout: {} ... terminating...".format(
@@ -145,7 +151,7 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
                         process_idx, node_count, processor_count, instance_timeout, current_processor_upper_bound))
                     break
             cur_it += 1
-            with open("proc_{}_timeout_{}.bin".format(process_idx, instance_timeout), 'wb') as file:
+            with open("./Data/proc_{}_timeout_{}.bin".format(process_idx, instance_timeout), 'wb') as file:
                 import pickle
                 pickle.dump(solve_log, file)
     print("Process {}: completed benchmarking ... terminating ".format(
@@ -154,6 +160,7 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
 
 
 def main():
+    np.random.seed(config.seed)  # check correct way of seeding
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('timeout', type=int)
     args = parser.parse_args()
@@ -161,8 +168,8 @@ def main():
     iteration_count = abs(
         config.processor_max-config.processor_min+1)*abs(config.node_max-config.node_min+1)
 
-    benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
-                                 config.node_max, config.node_min, args.timeout, config.core_count, iteration_count)
+    benchmark_instance = partial(benchmark, config.processor_max, config.processor_min, 
+                                 config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, True, run_instance_exhaustive)
 
     aggregate_solve_log = {}
 
@@ -176,7 +183,7 @@ def main():
 
     pp(aggregate_solve_log)
     # print(benchmark(processor_max,node_max, args.timeout))
-    with open("benchmark_timeout_{}.bin".format(args.timeout), 'wb') as file:
+    with open("./Data/benchmark_timeout_{}.bin".format(args.timeout), 'wb') as file:
         import pickle
         pickle.dump(aggregate_solve_log, file)
 

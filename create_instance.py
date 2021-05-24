@@ -12,7 +12,7 @@ def layer(subset_sizes, target):
 
 
 def layer_by_layer(n, p, seed, plot_graphs=False):
-    np.random.seed(seed)  # check correct way of seeding
+    # TODO: fix seeding
 
     # Distribute n vertices...
     subset_sizes = np.array([])
@@ -53,7 +53,12 @@ def layer_by_layer(n, p, seed, plot_graphs=False):
 
     return G
 
-layer_by_layer(config.node_min, np.random.rand(),
-               config.seed, plot_graphs=True)
-layer_by_layer(config.node_max, np.random.rand(),
-               config.seed, plot_graphs=True)
+def show_example_instances():
+    np.random.seed(config.seed)  # check correct way of seeding
+    layer_by_layer(config.node_min, np.random.rand(),
+                config.seed, plot_graphs=True)
+    layer_by_layer(config.node_max, np.random.rand(),
+                config.seed, plot_graphs=True)
+
+if __name__ == "__main__":
+    show_example_instances()

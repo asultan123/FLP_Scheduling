@@ -1,6 +1,6 @@
 debug = False
 instance_plt = False
-seed = 1
+seed = 1024
 processor_max = 8
 processor_min = 4
 node_max = 27
