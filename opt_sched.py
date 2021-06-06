@@ -40,17 +40,14 @@ def schedule(binding, grouped_top_sort):
             list(zip(group, group_binding)), key=itemgetter(1))
         last_processor = sorted_group[0][1]
         sched[sorted_group[0][0]] = group_time
-        max_group_time = 0
         for idx, (task, task_binding) in enumerate(sorted_group):
             if idx == 0:
                 continue
             group_time = group_time + 1 if task_binding == last_processor else time
-            if max_group_time < group_time:
-                max_group_time = group_time
             sched[task] = group_time
             last_processor = task_binding
         group_offset += len(group)
-        time = max_group_time+1
+        time = makespan(sched)
     return sched
 
 def makespan(sched):
@@ -106,10 +103,10 @@ def distributed_load_binding(grouped_top_sort, processors):
                 binding_counter = 0
     return binding
         
-def run_instance_naive_greedy(graph_instance, processor_count, node_count = None, monitor = None):
+def run_instance_naive_greedy(graph_instance, processor_count, node_count, monitor):
     solve_start = time.time()
     grouped_top_sort = list(topological_sort_grouped(graph_instance))
-    bindings_solved = 1
+    bindings_solved = processor_count**node_count #equivelent space "searched"
     selected_binding = distributed_load_binding(grouped_top_sort, processor_count)
     greedy_sched = schedule(selected_binding, grouped_top_sort)
     max_latency_sched = makespan(greedy_sched)
