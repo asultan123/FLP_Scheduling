@@ -26,7 +26,6 @@ def topological_sort_grouped(G):
                     new_zero_indegree.append(child)
         zero_indegree = new_zero_indegree
 
-
 def bindings(processors, nodes):
     return product(*[range(processors)]*nodes)
 
@@ -45,20 +44,16 @@ def schedule(binding, grouped_top_sort):
         for idx, (task, task_binding) in enumerate(sorted_group):
             if idx == 0:
                 continue
-            if task_binding == last_processor:
-                group_time += 1
-            else:
-                group_time = time
+            group_time = group_time + 1 if task_binding == last_processor else time
             if max_group_time < group_time:
                 max_group_time = group_time
             sched[task] = group_time
             last_processor = task_binding
         group_offset += len(group)
-        time += max_group_time+1
+        time = max_group_time+1
     return sched
 
-
-def max_latency(sched):
+def makespan(sched):
     return max(sched.values()) + 1
 
 class Timeout_Monitor:
@@ -90,7 +85,7 @@ def run_instance_exhaustive(graph_instance, processors, nodes, monitor):
     bindings_solved = 0
     for selected_binding in bindings(processors, nodes):
         sched = schedule(selected_binding, grouped_top_sort)
-        max_latency_sched = max_latency(sched)
+        max_latency_sched = makespan(sched)
         if opt_sched_latency is not None and opt_sched_latency > max_latency_sched:
             opt_sched_latency = max_latency_sched
             opt_sched = sched
@@ -99,6 +94,27 @@ def run_instance_exhaustive(graph_instance, processors, nodes, monitor):
             break
     solve_end = time.time()
     return (opt_sched_latency, opt_sched), bindings_solved, solve_end-solve_start
+
+def distributed_load_binding(grouped_top_sort, processors):
+    binding = []
+    for group in grouped_top_sort:
+        binding_counter = 0
+        for _ in group:
+            binding.append(binding_counter)
+            binding_counter += 1
+            if binding_counter == processors:
+                binding_counter = 0
+    return binding
+        
+def run_instance_naive_greedy(graph_instance, processor_count, node_count = None, monitor = None):
+    solve_start = time.time()
+    grouped_top_sort = list(topological_sort_grouped(graph_instance))
+    bindings_solved = 1
+    selected_binding = distributed_load_binding(grouped_top_sort, processor_count)
+    greedy_sched = schedule(selected_binding, grouped_top_sort)
+    max_latency_sched = makespan(greedy_sched)
+    solve_end = time.time()
+    return (max_latency_sched, greedy_sched), bindings_solved, solve_end-solve_start
 
 def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout, worker_count, iteration_count, allow_early_termination, method, start_idx):
 
@@ -159,7 +175,6 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
         process_idx, node_count, processor_count, instance_timeout, current_processor_upper_bound))
     return solve_log
 
-
 def main():
     np.random.seed(config.seed)  # check correct way of seeding
     if not os.path.exists('./Data'):
@@ -167,13 +182,18 @@ def main():
 
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('timeout', type=int)
+    parser.add_argument('--method', default='exhaustive')
     args = parser.parse_args()
 
     iteration_count = abs(
         config.processor_max-config.processor_min+1)*abs(config.node_max-config.node_min+1)
 
-    benchmark_instance = partial(benchmark, config.processor_max, config.processor_min, 
+    if args.method == 'exhaustive':
+        benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
                                  config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, True, run_instance_exhaustive)
+    elif args.method == 'greedy':
+        benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
+                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, run_instance_naive_greedy)
 
     aggregate_solve_log = {}
 
