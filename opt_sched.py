@@ -13,6 +13,8 @@ from numba import jit
 from pprint import pprint as pp
 import os
 
+print = partial(print, flush=True)
+
 def topological_sort_grouped(G):
     indegree_map = {v: d for v, d in G.in_degree() if d > 0}
     zero_indegree = [v for v, d in G.in_degree() if d == 0]
@@ -188,7 +190,7 @@ def main():
     if args.method == 'exhaustive':
         benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
                                  config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, True, run_instance_exhaustive)
-    elif args.method == 'greedy':
+    elif args.method == 'naive-greedy':
         benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
                                 config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, run_instance_naive_greedy)
 
