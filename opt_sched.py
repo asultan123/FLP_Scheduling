@@ -167,9 +167,10 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
                         process_idx, node_count, processor_count, instance_timeout, current_processor_upper_bound))
                     break
             cur_it += 1
-            with open("./Data/proc_{}_timeout_{}.bin".format(process_idx, instance_timeout), 'wb') as file:
-                import pickle
-                pickle.dump(solve_log, file)
+            if config.log_results:
+                with open("./Data/proc_{}_timeout_{}.bin".format(process_idx, instance_timeout), 'wb') as file:
+                    import pickle
+                    pickle.dump(solve_log, file)
     print("Process {}: completed benchmarking ... terminating ".format(
         process_idx, node_count, processor_count, instance_timeout, current_processor_upper_bound))
     return solve_log
@@ -206,9 +207,10 @@ def main():
 
     pp(aggregate_solve_log)
     # print(benchmark(processor_max,node_max, args.timeout))
-    with open("./Data/benchmark_timeout_{}.bin".format(args.timeout), 'wb') as file:
-        import pickle
-        pickle.dump(aggregate_solve_log, file)
+    if config.log_results:
+        with open("./Data/benchmark_timeout_{}.bin".format(args.timeout), 'wb') as file:
+            import pickle
+            pickle.dump(aggregate_solve_log, file)
 
 
 if __name__ == "__main__":
