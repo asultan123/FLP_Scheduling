@@ -1,4 +1,4 @@
-# Comb_Opt_project
+# FLP_Scheduling
 
 ## To install poetry
 (Assuming linux like enviornment)
