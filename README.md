@@ -1,5 +1,8 @@
 # FLP_Scheduling
 
+A benchmark for testing multiapplication scheduling techniques on heterogeneous platforms like: https://doi.org/10.1007/s11265-015-1058-5. 
+Simulation of benchmarked techniques available at: https://github.com/neu-ece-esl/FLP_Scheduling
+
 ## To install poetry
 (Assuming linux like enviornment)
 
