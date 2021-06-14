@@ -19,9 +19,12 @@ poetry install
 ### To start virtual enviornment
 poetry shell
 
+## Synthetic task graph generation
+The layer-by-layer approach described in [1] is used to generate appropriate task graphs that represent dependency relations that exist in many real world applications.
+
 ## Techniques
 
-The below technique list will be updated everytime a new technique is added. 
+The technique list below will be updated everytime a new technique is added. 
 
 ### Exhaustive Search
 
@@ -150,7 +153,7 @@ are grouped based on topological sort, bound to different processors and then sc
 of that binding. The grouping based on topological sort is given as follows:
 
 {{0, 1, 2, 3, 4, 5}, {6, 7}, {8, 9, 10, 11}}
-
+used in 
 With the following binding (assuming 4 processors)
 
 {{0, 1, 2, 3, 0, 1}, {0, 1}, {0, 1, 2, 3}}
@@ -168,3 +171,8 @@ based on what has already been scheduled then the algorithm may be able to find 
 makespan. An illustration of this greedy lookahead is given in Fig. 4
 
 #### Benchmark Results
+
+## References
+[1] D. Cordeiro, G. Mounié, S. Perarnau, D. Trystram, J.-M. Vincent, and F. Wagner, “Random graph
+generation for scheduling simulations,” Proceedings of the 3rd International ICST Conference on
+Simulation Tools and Techniques, 2010.
