@@ -22,6 +22,10 @@ poetry shell
 ## Synthetic task graph generation
 The layer-by-layer approach described in [1] is used to generate appropriate task graphs that represent dependency relations that exist in many real world applications.
 
+## Note On Benchmark
+
+All benchmark runs were performed on a workstations with an i7-9700k and 32gb of Ram
+
 ## Techniques
 
 The technique list below will be updated everytime a new technique is added. 
@@ -70,6 +74,10 @@ processor_count^node_count.
 While this approach is guaranteed to find the optimal schedule it becomes infeasible if instance size grows passed and more than 8 nodes in the graph. 
 
 #### Benchmark Results
+
+![Exhaustive with 60 second timeout](https://github.com/asultan123/FLP_Scheduling/blob/main/Figures/Exhaustive_Results/image-003.png)
+
+#### Relevant Code Snippet
 
 Below is a snippet of the exhaustive search algorithm python code:
 ``` Python
@@ -135,25 +143,32 @@ The below figures show how both the exhaustive and the naïve greedy approaches 
 benchmark with a timeout of 60 seconds. Random directed graphs using the layer-by-layer technique
 were generated within the timeout period and scheduled based on both approaches. The number of nodes
 within them varied from 4 to 80. The number of processors available to schedule was varied from 4 to 8.
-From Fig. 1 it can be shown that the exhaustive search algorithm failed to solve any instances of 8 nodes
+From the previous benchmark results figure it can be shown that the exhaustive search algorithm failed to solve any instances of 8 nodes
 or more regardless of the number of processors available. This is understandable given the fact that the
 exhaustive approach’s complexity is processor_count^number_of_nodes because the search space of
-available bindings is massive. Fig. 2 shows the performance of the above naïve greedy algorithm.
+available bindings is massive. The below benchmark figure shows the performance of the above naïve greedy algorithm.
 Regardless of instance size naïve greedy algorithm managed to schedule all instances; however, the
 algorithm is provably non-optimal based on the inherent limitation of not looking ahead within the task
 graph. An example that can be used to illustrate this limitation will be given in the following section. An
-interesting thing to note from Fig.2 is the fact that the number of instances solved is unaffected by the
+interesting thing to note from the benchmark results below is the fact that the number of instances solved is unaffected by the
 number of available processors because the algorithm distributes available tasks on the available
 processors without backtracking to find better bindings. The overall complexity of the above algorithm is
 O(V+E). 
 
+#### Benchmark Results
+
+![Greedy with 60 second timeout](https://github.com/asultan123/FLP_Scheduling/blob/main/Figures/Greedy_Results/Page-2-Image-2.png)
+
 #### Disadvantages: Naïve Greedy Non-Optimal Instance
-Fig.3 is an example of an instance that isn’t scheduled optimally using our greedy naïve algorithm. Tasks
+
+![Greedy on a non-optimal instance](https://github.com/asultan123/FLP_Scheduling/blob/main/Figures/Greedy_Results/Page-3-Image-3.png)
+
+The above figure is an example of an instance that isn’t scheduled optimally using our greedy naïve algorithm. Tasks
 are grouped based on topological sort, bound to different processors and then scheduled as a consequence
 of that binding. The grouping based on topological sort is given as follows:
 
 {{0, 1, 2, 3, 4, 5}, {6, 7}, {8, 9, 10, 11}}
-used in 
+
 With the following binding (assuming 4 processors)
 
 {{0, 1, 2, 3, 0, 1}, {0, 1}, {0, 1, 2, 3}}
@@ -162,15 +177,16 @@ This results in the following schedule (Task, Start Time):
 
 (0, 0), (1, 0), (2, 0), (3, 0), (4, 1), (5, 1), (6, 2), (7, 2), (8, 3), (9, 3), (10, 3), (11, 3)
 
-Fig.3 illustrates the above scheduling and binding overlayed on the instance diagram. Because the
+The above figure illustrates the afformentioned scheduling and binding overlayed on the instance diagram. Because the
 algorithm performs the precedence-based grouping once at the beginning the algorithm doesn’t look for
 tasks to execute beyond the group of tasks it’s actively scheduling at any given point. This ignores some
 optimizations like executing tasks 4, 5, 6, and 7 concurrently as a result of executing tasks 0, 1, 2, 3 which
 are task 6 and 7’s predecessors. If the algorithm is allowed to look ahead to expand its current group
 based on what has already been scheduled then the algorithm may be able to find a schedule with a lower
-makespan. An illustration of this greedy lookahead is given in Fig. 4
+makespan. An illustration of this greedy lookahead is given below:
 
-#### Benchmark Results
+![Greedy on a non-optimal instance](https://github.com/asultan123/FLP_Scheduling/blob/main/Figures/Greedy_Results/Page-4-Image-4.png)
+
 
 ## References
 [1] D. Cordeiro, G. Mounié, S. Perarnau, D. Trystram, J.-M. Vincent, and F. Wagner, “Random graph
