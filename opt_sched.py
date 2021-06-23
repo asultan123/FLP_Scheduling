@@ -12,6 +12,7 @@ from functools import partial
 from numba import jit
 from pprint import pprint as pp
 import os
+import gurobipy
 
 print = partial(print, flush=True)
 
@@ -79,6 +80,7 @@ class Timeout_Monitor:
 def run_instance_exhaustive(graph_instance, processors, nodes, monitor):
     solve_start = time.time()
     grouped_top_sort = list(topological_sort_grouped(graph_instance))
+    # Todo: Fix optimal_sched_latency return
     opt_sched_latency = None
     opt_sched = None
     bindings_solved = 0
@@ -148,6 +150,7 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
                 graph_instance = layer_by_layer(node_count, np.random.rand(), config.seed)
                 _, bindings_solved, solve_time = method(graph_instance, processor_count, node_count, monitor)
                 cum_solve_time += solve_time
+                # Todo: fix how "solved instances" are identified
                 if bindings_solved == processor_count**node_count:
                     solved_count += 1
             # adjust to exclude generation time
