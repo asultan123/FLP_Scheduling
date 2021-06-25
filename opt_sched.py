@@ -16,20 +16,6 @@ import gurobipy
 
 print = partial(print, flush=True)
 
-
-def topological_sort_grouped(G):
-    indegree_map = {v: d for v, d in G.in_degree() if d > 0}
-    zero_indegree = [v for v, d in G.in_degree() if d == 0]
-    while zero_indegree:
-        yield zero_indegree
-        new_zero_indegree = []
-        for v in zero_indegree:
-            for _, child in G.edges(v):
-                indegree_map[child] -= 1
-                if not indegree_map[child]:
-                    new_zero_indegree.append(child)
-        zero_indegree = new_zero_indegree
-
 def bindings(processors, nodes):
     return product(*[range(processors)]*nodes)
 
@@ -81,7 +67,7 @@ class Timeout_Monitor:
 def run_instance_exhaustive(graph_instance, processors, nodes, monitor):
     solve_start = time.time()
     grouped_top_sort = list(topological_sort_grouped(graph_instance))
-    # Todo: Fix optimal_sched_latency return
+    # TODO: Fix optimal_sched_latency return
     opt_sched_latency = None
     opt_sched = None
     bindings_solved = 0
@@ -111,6 +97,7 @@ def distributed_load_binding(grouped_top_sort, processors):
 def run_instance_naive_greedy(graph_instance, processor_count, node_count, monitor):
     solve_start = time.time()
     grouped_top_sort = list(topological_sort_grouped(graph_instance))
+    # TODO Fix instance solved identifier
     bindings_solved = processor_count**node_count #equivelent space "searched"
     selected_binding = distributed_load_binding(grouped_top_sort, processor_count)
     greedy_sched = schedule(selected_binding, grouped_top_sort)
@@ -198,6 +185,10 @@ def main():
     elif args.method == 'naive-greedy':
         benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
                                 config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, run_instance_naive_greedy)
+    elif args.method == 'ilp_1':
+        # TODO ADD INSTANCE PRE-CONVERSION TO ILP MODEL
+        pass
+
 
     aggregate_solve_log = {}
 
