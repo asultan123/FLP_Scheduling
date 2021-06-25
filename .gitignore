@@ -5,6 +5,8 @@
 *.bin
 counts_*
 
+results
+
 __pycache__/
 *.py[cod]
 *$py.class
