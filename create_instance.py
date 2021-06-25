@@ -11,13 +11,12 @@ def layer(subset_sizes, target):
             return layer_idx
 
 
-def layer_by_layer(n, p, seed, plot_graphs=False):
-    # TODO: fix seeding
-
-    # Distribute n vertices...
+def layer_by_layer(n, p, plot_graphs=False, favor_longer_graphs=True):
     subset_sizes = np.array([])
     while np.sum(subset_sizes) < n-1:
         y = (n - np.sum(subset_sizes))
+        if favor_longer_graphs:
+            y /= np.random.randint(1,y)
         x = np.random.randint(1, y + 1)
         subset_sizes = np.append(subset_sizes, x)
 
@@ -54,11 +53,23 @@ def layer_by_layer(n, p, seed, plot_graphs=False):
     return G
 
 def show_example_instances():
-    np.random.seed(config.seed)  # check correct way of seeding
-    layer_by_layer(config.node_min, np.random.rand(),
-                config.seed, plot_graphs=True)
-    layer_by_layer(config.node_max, np.random.rand(),
-                config.seed, plot_graphs=True)
+      # check correct way of seeding
+    layer_by_layer(config.node_min, np.random.rand(), plot_graphs=True)
+    layer_by_layer(config.node_max, np.random.rand(), plot_graphs=True)
+
+def ilp_formulation():
+    instance = layer_by_layer(20, 0.25, plot_graphs=True)
+    generate_ilp_model_from_instance(instance)
+    
+def generate_ilp_model_from_instance(instance):
+    instance_transitive_closure = nx.transitive_closure_dag(instance)
+    instance_transitive_reduction = nx.transitive_reduction(instance)
+    nodes_with_no_successors = [v for v, d in instance_transitive_reduction.out_degree() if d == 0]
+    nodes_with_no_predecessors = [v for v, d in instance_transitive_reduction.in_degree() if d == 0]
+
+    pass    
 
 if __name__ == "__main__":
-    show_example_instances()
+    np.random.seed(config.seed)
+    ilp_formulation()
+

@@ -13,6 +13,7 @@ from numba import jit
 from pprint import pprint as pp
 import os
 
+
 def topological_sort_grouped(G):
     indegree_map = {v: d for v, d in G.in_degree() if d > 0}
     zero_indegree = [v for v, d in G.in_degree() if d == 0]
