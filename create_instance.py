@@ -60,9 +60,14 @@ def show_example_instances():
     layer_by_layer(config.node_max, np.random.rand(), plot_graphs=True)
 
 def ilp_formulation():
-    instance = layer_by_layer(20, 0.25, plot_graphs=False)
+    instance = layer_by_layer(20, 0.25, plot_graphs=True)
     generate_ilp_model_from_instance(instance,4)
     
+def toggle_self_dependence(adj_matrix):
+    for i in range(len(adj_matrix.diagonal())):
+        adj_matrix[i,i] = 0 if adj_matrix[i,i] == 1 else 1
+    return adj_matrix 
+
 def generate_ilp_model_from_instance(instance, processor_count):
     
     model = pyo.ConcreteModel()
@@ -99,11 +104,23 @@ def generate_ilp_model_from_instance(instance, processor_count):
     widths = map(len, topologically_sorted_instance)
     max_width = max(widths)
     if processor_count < max_width:
-        instance_transitive_closure = nx.adjacency_matrix(nx.transitive_closure_dag(instance))
-        for idx in range(len(instance_transitive_closure.diagonal())):
-            instance_transitive_closure[idx,idx] = 1
-            
+        instance_adjacency_matrix = nx.convert_matrix.to_numpy_matrix(instance)
+        
         # TODO ADD BEFORE TASK ORDERING CONSTRAINT
+        before_expressions = list(range(len(instance.nodes())))
+        for node in instance.nodes():
+            before_expressions[node] = model.w[0,node+1]
+            if node not in nodes_with_no_predecessors:
+                predecessor_list = [idx+1 for idx, i in enumerate(instance_adjacency_matrix[:,node]) if i == 1]
+                before_expressions[node] += sum([model.w[i, node+1] for i in predecessor_list])
+
+        instance_transitive_closure = nx.convert_matrix.to_numpy_matrix(nx.transitive_closure_dag(instance))
+        instance_transitive_closure_with_self_dependence = toggle_self_dependence(instance_transitive_closure)
+        for node in instance.nodes():
+            concurrency_list = [idx+1 for idx, i in enumerate(instance_transitive_closure_with_self_dependence[:,node]) if i == 0]
+            before_expressions[node] += sum([model.w[i, node+1] for i in concurrency_list])
+            
+
         # TODO AFTER TASK ORDERING CONSTRAINT
         # TODO ADD RELAXABLE CONSTRAINT ON SEQUENTIAL EXECUTION
         

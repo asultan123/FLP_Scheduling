@@ -12,12 +12,15 @@ def main():
 
     cons = [(i+1,i+2) for i in range(10)]
     def cons1(model, i):
-        return cons[i][0]*model.x[1] + cons[i][0]*model.x[2] >= 1
+        if(i>5):
+            return cons[i][0]*model.x[1] + cons[i][1]*model.x[2] >= 1
+        else:
+            return cons[i][1]*model.x[1] + cons[i][0]*model.x[2] >= 1
 
-    # model.Constraint1 = pyo.Constraint(RangeSet(0,9), rule=cons1)
+    model.Constraint1 = pyo.Constraint(RangeSet(0,9), rule=cons1)
     
-    for i in range(0,10):
-        setattr(model, "Constraint_{}".format(i), pyo.Constraint(expr = cons[i][0]*model.x[1] + cons[i][0]*model.x[2] >= 1))
+    # for i in range(0,10):
+    #     setattr(model, "Constraint_{}".format(i), pyo.Constraint(expr = cons[i][0]*model.x[1] + cons[i][0]*model.x[2] >= 1))
     
     opt.solve(model)
 
