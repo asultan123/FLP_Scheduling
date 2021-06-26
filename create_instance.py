@@ -5,16 +5,16 @@ from itertools import product
 import config
 from pyomo.core.base.set import RangeSet
 import pyomo.environ as pyo
-from utility import change_node_start_index, get_task_graph_max_width, topological_sort_grouped, topological_sort_grouped_with_terminal_node_reposition
+from utility import *
 from itertools import chain
 from copy import copy
 
 
 def layer(subset_sizes, target):
     for layer_idx, subset_size in enumerate(np.cumsum(subset_sizes)):
-        if target < subset_size:
+        if target <= subset_size:
             return layer_idx
-
+    raise Exception("Could not find target")
 
 def layer_by_layer(n, p, plot_graphs=False, favor_longer_graphs=True):
     subset_sizes = np.array([])
@@ -57,7 +57,7 @@ def layer_by_layer(n, p, plot_graphs=False, favor_longer_graphs=True):
     # Add information regarding the layer of each node (for graph purposes)
     if plot_graphs:
         for i in range(1, n+1):
-            G.nodes[i]['layer'] = layer(subset_sizes, i-1)
+            G.nodes[i]['layer'] = layer(subset_sizes, i)
 
         pos = nx.multipartite_layout(G, subset_key="layer")
         nx.draw(G, pos, with_labels=True)
@@ -73,8 +73,8 @@ def show_example_instances():
 
 
 def ilp_formulation():
-    instance = layer_by_layer(20, 0.15, plot_graphs=False)
-    return TaskGraphILPGenerator.construct_model(instance, 4)
+    instance = layer_by_layer(8, 0.15, plot_graphs=True)
+    return TaskGraphILPGenerator.construct_model(instance, 2)
 
 
 def toggle_self_dependence(adj_matrix):
