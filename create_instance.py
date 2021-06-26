@@ -76,8 +76,8 @@ def show_example_instances():
 
 
 def ilp_formulation():
-    instance = layer_by_layer(6, 0.15, plot_graphs=True)
-    return TaskGraphILPGenerator.construct_model(instance, 2)
+    instance = layer_by_layer(22, 0.20, plot_graphs=True)
+    return TaskGraphILPGenerator.construct_model(instance, 4)
 
 
 def toggle_self_dependence(adj_matrix):

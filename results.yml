@@ -5,16 +5,16 @@
 #   Problem Information
 # ----------------------------------------------------------
 Problem: 
-- Name: x91
-  Lower bound: 3.0
-  Upper bound: 3.0
+- Name: x463
+  Lower bound: 5.0
+  Upper bound: 5.0
   Number of objectives: 1
-  Number of constraints: 68
-  Number of variables: 70
+  Number of constraints: 394
+  Number of variables: 399
   Number of binary variables: 0
-  Number of integer variables: 69
+  Number of integer variables: 398
   Number of continuous variables: 1
-  Number of nonzeros: 245
+  Number of nonzeros: 1744
   Sense: minimize
 # ----------------------------------------------------------
 #   Solver Information
@@ -25,9 +25,9 @@ Solver:
   Message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
   Termination condition: optimal
   Termination message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
-  Wall time: 0.0020852088928222656
+  Wall time: 1.6451570987701416
   Error rc: 0
-  Time: 0.03139042854309082
+  Time: 1.6956048011779785
 # ----------------------------------------------------------
 #   Solution Information
 # ----------------------------------------------------------
@@ -39,40 +39,88 @@ Solution:
   Message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
   Objective:
     OBJ:
-      Value: 3
+      Value: 5
   Variable:
     T:
-      Value: 3
+      Value: 5
     w[0,1]:
       Value: 1
     w[0,2]:
       Value: 1
-    w[0,3]:
+    w[0,6]:
       Value: 1
-    w[1,7]:
+    w[0,9]:
       Value: 1
-    w[2,4]:
+    w[1,18]:
       Value: 1
-    w[3,5]:
+    w[10,3]:
       Value: 1
-    w[4,6]:
+    w[11,16]:
       Value: 1
-    w[5,8]:
+    w[12,17]:
       Value: 1
-    w[6,9]:
+    w[13,19]:
       Value: 1
-    w[7,9]:
+    w[14,21]:
       Value: 1
-    w[8,9]:
+    w[15,21]:
       Value: 1
+    w[16,20]:
+      Value: 1
+    w[17,13]:
+      Value: 1
+    w[18,4]:
+      Value: 1
+    w[19,21]:
+      Value: 1
+    w[2,12]:
+      Value: 1
+    w[20,21]:
+      Value: 1
+    w[3,15]:
+      Value: 1
+    w[4,8]:
+      Value: 1
+    w[5,11]:
+      Value: 1
+    w[6,5]:
+      Value: 1
+    w[7,10]:
+      Value: 1
+    w[8,14]:
+      Value: 1
+    w[9,7]:
+      Value: 1
+    x[10]:
+      Value: 2
+    x[11]:
+      Value: 2
+    x[12]:
+      Value: 1
+    x[13]:
+      Value: 3
+    x[14]:
+      Value: 4
+    x[15]:
+      Value: 4
+    x[16]:
+      Value: 3
+    x[17]:
+      Value: 2
+    x[18]:
+      Value: 1
+    x[19]:
+      Value: 4
+    x[20]:
+      Value: 4
+    x[3]:
+      Value: 3
     x[4]:
-      Value: 1
+      Value: 2
     x[5]:
       Value: 1
-    x[6]:
-      Value: 2
     x[7]:
-      Value: 2
+      Value: 1
     x[8]:
-      Value: 2
+      Value: 3
   Constraint: No values
