@@ -89,6 +89,7 @@ class TaskGraphILPGenerator():
         model = pyo.ConcreteModel()
         model = cls.create_variables(instance, model)
         model = cls.add_constraints(instance, model, processor_count)
+        return model
 
     @classmethod
     def create_variables(cls, instance, model):
@@ -120,9 +121,27 @@ class TaskGraphILPGenerator():
 
         max_width = get_task_graph_max_width(instance)
         if processor_count < max_width:
-            cls.add_task_ordering_constraints(
-                instance, nodes_with_no_predecessors, model)
-            print()
+            relaxation_constant = node_count+1
+            instance_transitive_closure = nx.transitive_closure_dag(instance)
+            model = cls.add_task_ordering_constraints(
+                instance, instance_transitive_closure, nodes_with_no_predecessors, nodes_with_no_successors, model)
+            model = cls.add_per_processor_ordering_constraint(instance_transitive_closure, relaxation_constant, model)
+            return model
+
+    @classmethod
+    def add_per_processor_ordering_constraint(cls, instance_transitive_closure, relaxation_constant, model):
+        sequential_expression = {}
+
+        for node in instance_transitive_closure.nodes():
+            for parallel_node in cls.get_concurrent_nodes(node, instance_transitive_closure):
+                sequential_expression[(node, parallel_node)] = model.x[parallel_node] >= model.x[node] + \
+                    1 - relaxation_constant*(1-model.w[node, parallel_node])
+              
+        model.force_sequential_scheduling_constraint = pyo.ConstraintList()
+        for _, expr in sequential_expression.items():
+            model.force_sequential_scheduling_constraint.add(expr)
+        
+        return model
 
     @classmethod
     def get_concurrent_nodes(cls, node, instance_transitive_closure):
@@ -139,30 +158,55 @@ class TaskGraphILPGenerator():
         return concurrency_list
 
     @classmethod
-    def add_task_ordering_constraints(cls, instance, nodes_with_no_predecessors, model):
+    def add_task_ordering_constraints(cls, instance, instance_transitive_closure, nodes_with_no_predecessors, nodes_with_no_successors, model):
         model = cls.add_backwards_task_ordering_constraints(
-            instance, nodes_with_no_predecessors, model)
+            instance, instance_transitive_closure, nodes_with_no_predecessors, model)
+        model = cls.add_forward_task_ordering_constraints(
+            instance, instance_transitive_closure, nodes_with_no_successors, model)
+        return model
 
     @classmethod
-    def add_backwards_task_ordering_constraints(cls, instance, nodes_with_no_predecessors, model):
+    def add_backwards_task_ordering_constraints(cls, instance, instance_transitive_closure, nodes_with_no_predecessors, model):
         backwards_expressions = {}
         for node in instance.nodes():
             backwards_expressions[node] = model.w[0, node]
             if node not in nodes_with_no_predecessors:
                 backwards_expressions[node] += sum([model.w[i, node]
-                                                for i in instance.predecessors(node)])
+                                                    for i in instance.predecessors(node)])
 
-        instance_transitive_closure = nx.transitive_closure_dag(instance)
         for node in sorted(instance.nodes()):
             current_node_list = cls.get_concurrent_nodes(
                 node, instance_transitive_closure)
             backwards_expressions[node] += sum([model.w[i, node]
-                                            for i in current_node_list])
-        
-        model.backwards_task_ordering_constraints = pyo.ConstraintList()
-        
+                                                for i in current_node_list])
+
+        model.backward_task_ordering_constraints = pyo.ConstraintList()
+
         for _, summation in backwards_expressions.items():
-            model.backwards_task_ordering_constraints.add(expr = summation == 1)
+            model.backward_task_ordering_constraints.add(expr=summation == 1)
+
+        return model
+
+    @classmethod
+    def add_forward_task_ordering_constraints(cls, instance, instance_transitive_closure, nodes_with_no_successors, model):
+        forwards_expressions = {}
+        node_count = len(instance.nodes())
+        for node in instance.nodes():
+            forwards_expressions[node] = model.w[node, node_count+1]
+            if node not in nodes_with_no_successors:
+                forwards_expressions[node] += sum([model.w[node, i]
+                                                   for i in instance.successors(node)])
+
+        for node in sorted(instance.nodes()):
+            current_node_list = cls.get_concurrent_nodes(
+                node, instance_transitive_closure)
+            forwards_expressions[node] += sum([model.w[node, i]
+                                               for i in current_node_list])
+
+        model.forward_task_ordering_constraints = pyo.ConstraintList()
+
+        for _, summation in forwards_expressions.items():
+            model.forward_task_ordering_constraints.add(expr=summation == 1)
 
         return model
 
