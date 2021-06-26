@@ -103,27 +103,39 @@ class TaskGraphILPGenerator():
 
     @classmethod
     def add_constraints(cls, instance, model, processor_count):
+        
         instance_transitive_reduction = nx.transitive_reduction(instance)
+        nodes_with_no_successors = [
+            v for v, d in instance_transitive_reduction.out_degree() if d == 0]
         node_count = len(instance.nodes())
         nodes_with_no_predecessors = [
             v for v, d in instance_transitive_reduction.in_degree() if d == 0]
+        
+        
         model = cls.add_precedence_constraints(
-            instance_transitive_reduction, nodes_with_no_predecessors, model)
+            instance_transitive_reduction, nodes_with_no_successors, model)
+        
         model = cls.add_no_predecessors_constraint(
             nodes_with_no_predecessors, model)
-        nodes_with_no_successors = [
-            v for v, d in instance_transitive_reduction.out_degree() if d == 0]
+        
         model = cls.add_makespan_constraint(nodes_with_no_successors, model)
+        
         model = cls.add_processor_bound_constraint(
             node_count, processor_count, model)
 
         max_width = utility.get_task_graph_max_width(instance)
+        
         if processor_count < max_width:
+        
             relaxation_constant = node_count+1
+        
             instance_transitive_closure = nx.transitive_closure_dag(instance)
+        
             model = cls.add_task_ordering_constraints(
                 instance, instance_transitive_closure, nodes_with_no_predecessors, nodes_with_no_successors, model)
+        
             model = cls.add_per_processor_ordering_constraint(instance_transitive_closure, relaxation_constant, model)
+        
             return model
 
     @classmethod
@@ -134,7 +146,7 @@ class TaskGraphILPGenerator():
             for parallel_node in cls.get_concurrent_nodes(node, instance_transitive_closure):
                 sequential_expression[(node, parallel_node)] = model.x[parallel_node] >= model.x[node] + \
                     1 - relaxation_constant*(1-model.w[node, parallel_node])
-              
+        
         model.force_sequential_scheduling_constraint = pyo.ConstraintList()
         for _, expr in sequential_expression.items():
             model.force_sequential_scheduling_constraint.add(expr)
@@ -209,13 +221,13 @@ class TaskGraphILPGenerator():
         return model
 
     @classmethod
-    def add_precedence_constraints(cls, instance_transitive_reduction, nodes_with_no_predecessors, model):
+    def add_precedence_constraints(cls, instance_transitive_reduction, nodes_with_no_successors, model):
         model.precedence_constraints = pyo.ConstraintList()
         for node in instance_transitive_reduction.nodes():
-            if node not in nodes_with_no_predecessors:
-                for successor in instance_transitive_reduction.successors(node):
+            if node not in nodes_with_no_successors:
+                for successors in instance_transitive_reduction.successors(node):
                     model.precedence_constraints.add(
-                        expr=model.x[successor] >= model.x[node] + 1)
+                        expr=model.x[successors] >= model.x[node] + 1)
         return model
 
     @classmethod
@@ -243,5 +255,6 @@ np.random.seed(config.seed)
 opt = pyo.SolverFactory('gurobi')
 model = ilp_formulation()
 opt.solve(model)
+model.T.display()
+model.x.display()
 
-model.pprint()

@@ -6,15 +6,15 @@
 # ----------------------------------------------------------
 Problem: 
 - Name: x91
-  Lower bound: 2.0
-  Upper bound: 2.0
+  Lower bound: 4.0
+  Upper bound: 4.0
   Number of objectives: 1
-  Number of constraints: 62
+  Number of constraints: 68
   Number of variables: 71
   Number of binary variables: 0
   Number of integer variables: 70
   Number of continuous variables: 1
-  Number of nonzeros: 234
+  Number of nonzeros: 246
   Sense: minimize
 # ----------------------------------------------------------
 #   Solver Information
@@ -25,9 +25,9 @@ Solver:
   Message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
   Termination condition: optimal
   Termination message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
-  Wall time: 0.0011098384857177734
+  Wall time: 0.0027561187744140625
   Error rc: 0
-  Time: 2.096970558166504
+  Time: 0.031723737716674805
 # ----------------------------------------------------------
 #   Solution Information
 # ----------------------------------------------------------
@@ -39,34 +39,40 @@ Solution:
   Message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
   Objective:
     OBJ:
-      Value: 2
+      Value: 4
   Variable:
     T:
-      Value: 2
-    w[0,2]:
+      Value: 4
+    w[0,3]:
       Value: 1
     w[0,4]:
       Value: 1
-    w[1,7]:
+    w[1,5]:
       Value: 1
-    w[2,5]:
+    w[2,7]:
       Value: 1
-    w[3,1]:
+    w[3,2]:
       Value: 1
-    w[4,6]:
+    w[4,1]:
       Value: 1
     w[5,8]:
       Value: 1
-    w[6,3]:
+    w[6,9]:
       Value: 1
-    w[7,9]:
+    w[7,6]:
       Value: 1
     w[8,9]:
       Value: 1
     x[1]:
+      Value: 1
+    x[2]:
+      Value: 1
+    x[5]:
       Value: 2
-    x[3]:
-      Value: 1
+    x[6]:
+      Value: 3
+    x[7]:
+      Value: 2
     x[8]:
-      Value: 1
+      Value: 3
   Constraint: No values
