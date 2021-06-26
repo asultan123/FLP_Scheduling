@@ -5,10 +5,8 @@ from itertools import product
 import config
 from pyomo.core.base.set import RangeSet
 import pyomo.environ as pyo
-from utility import *
+import utility
 from itertools import chain
-from copy import copy
-
 
 def layer(subset_sizes, target):
     for layer_idx, subset_size in enumerate(np.cumsum(subset_sizes)):
@@ -46,9 +44,9 @@ def layer_by_layer(n, p, plot_graphs=False, favor_longer_graphs=True):
     # Conver the numpy matrix into a directed networkX graph
     G = nx.convert_matrix.from_numpy_array(M, create_using=nx.DiGraph)
 
-    G_grouped = topological_sort_grouped_with_terminal_node_reposition(G)
+    G_grouped = utility.topological_sort_grouped_with_terminal_node_reposition(G)
     subset_sizes = list(map(len, G_grouped))
-    G = change_node_start_index(G, G_grouped)
+    G = utility.change_node_start_index(G, G_grouped)
 
     # print("Number of Nodes: ", G.number_of_nodes())
     if config.debug:
@@ -119,7 +117,7 @@ class TaskGraphILPGenerator():
         model = cls.add_processor_bound_constraint(
             node_count, processor_count, model)
 
-        max_width = get_task_graph_max_width(instance)
+        max_width = utility.get_task_graph_max_width(instance)
         if processor_count < max_width:
             relaxation_constant = node_count+1
             instance_transitive_closure = nx.transitive_closure_dag(instance)
@@ -241,6 +239,9 @@ class TaskGraphILPGenerator():
         return model
 
 
-if __name__ == "__main__":
-    np.random.seed(config.seed)
-    ilp_formulation()
+np.random.seed(config.seed)
+opt = pyo.SolverFactory('gurobi')
+model = ilp_formulation()
+opt.solve(model)
+
+model.pprint()

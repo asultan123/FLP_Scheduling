@@ -5,16 +5,16 @@
 #   Problem Information
 # ----------------------------------------------------------
 Problem: 
-- Name: x3
-  Lower bound: 0.6666666666666666
-  Upper bound: 0.6666666666666666
+- Name: x91
+  Lower bound: 2.0
+  Upper bound: 2.0
   Number of objectives: 1
-  Number of constraints: 2
-  Number of variables: 3
+  Number of constraints: 62
+  Number of variables: 71
   Number of binary variables: 0
-  Number of integer variables: 0
-  Number of continuous variables: 3
-  Number of nonzeros: 3
+  Number of integer variables: 70
+  Number of continuous variables: 1
+  Number of nonzeros: 234
   Sense: minimize
 # ----------------------------------------------------------
 #   Solver Information
@@ -25,9 +25,9 @@ Solver:
   Message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
   Termination condition: optimal
   Termination message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
-  Wall time: 0.0003020763397216797
+  Wall time: 0.0011098384857177734
   Error rc: 0
-  Time: 0.06259751319885254
+  Time: 2.096970558166504
 # ----------------------------------------------------------
 #   Solution Information
 # ----------------------------------------------------------
@@ -39,8 +39,34 @@ Solution:
   Message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
   Objective:
     OBJ:
-      Value: 0.6666666666666666
+      Value: 2
   Variable:
+    T:
+      Value: 2
+    w[0,2]:
+      Value: 1
+    w[0,4]:
+      Value: 1
+    w[1,7]:
+      Value: 1
+    w[2,5]:
+      Value: 1
+    w[3,1]:
+      Value: 1
+    w[4,6]:
+      Value: 1
+    w[5,8]:
+      Value: 1
+    w[6,3]:
+      Value: 1
+    w[7,9]:
+      Value: 1
+    w[8,9]:
+      Value: 1
     x[1]:
-      Value: 0.3333333333333333
+      Value: 2
+    x[3]:
+      Value: 1
+    x[8]:
+      Value: 1
   Constraint: No values
