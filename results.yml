@@ -6,15 +6,15 @@
 # ----------------------------------------------------------
 Problem: 
 - Name: x91
-  Lower bound: 4.0
-  Upper bound: 4.0
+  Lower bound: 3.0
+  Upper bound: 3.0
   Number of objectives: 1
   Number of constraints: 68
-  Number of variables: 71
+  Number of variables: 70
   Number of binary variables: 0
-  Number of integer variables: 70
+  Number of integer variables: 69
   Number of continuous variables: 1
-  Number of nonzeros: 246
+  Number of nonzeros: 245
   Sense: minimize
 # ----------------------------------------------------------
 #   Solver Information
@@ -25,9 +25,9 @@ Solver:
   Message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
   Termination condition: optimal
   Termination message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
-  Wall time: 0.0027561187744140625
+  Wall time: 0.0020852088928222656
   Error rc: 0
-  Time: 0.031723737716674805
+  Time: 0.03139042854309082
 # ----------------------------------------------------------
 #   Solution Information
 # ----------------------------------------------------------
@@ -39,40 +39,40 @@ Solution:
   Message: Model was solved to optimality (subject to tolerances), and an optimal solution is available.
   Objective:
     OBJ:
-      Value: 4
+      Value: 3
   Variable:
     T:
-      Value: 4
+      Value: 3
+    w[0,1]:
+      Value: 1
+    w[0,2]:
+      Value: 1
     w[0,3]:
       Value: 1
-    w[0,4]:
+    w[1,7]:
       Value: 1
-    w[1,5]:
+    w[2,4]:
       Value: 1
-    w[2,7]:
+    w[3,5]:
       Value: 1
-    w[3,2]:
-      Value: 1
-    w[4,1]:
+    w[4,6]:
       Value: 1
     w[5,8]:
       Value: 1
     w[6,9]:
       Value: 1
-    w[7,6]:
+    w[7,9]:
       Value: 1
     w[8,9]:
       Value: 1
-    x[1]:
-      Value: 1
-    x[2]:
+    x[4]:
       Value: 1
     x[5]:
-      Value: 2
+      Value: 1
     x[6]:
-      Value: 3
+      Value: 2
     x[7]:
       Value: 2
     x[8]:
-      Value: 3
+      Value: 2
   Constraint: No values

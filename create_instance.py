@@ -37,7 +37,12 @@ def layer_by_layer(n, p, plot_graphs=False, favor_longer_graphs=True):
 
     for i in range(n):
         if (sum(M[i, :]) + sum(M[:, i])) == 0:
-            M[i, np.random.randint(i+1, n)] = 1
+            if i == 0:
+                M[i, np.random.randint(i+1, n)] = 1
+            elif i == n-1:
+                M[np.random.randint(0, i-1), i] = 1
+            else:
+                M[i, np.random.randint(i+1, n)] = 1
 
     # print("\nAdjacency Matrix:\n", M)
 
@@ -71,7 +76,7 @@ def show_example_instances():
 
 
 def ilp_formulation():
-    instance = layer_by_layer(8, 0.15, plot_graphs=True)
+    instance = layer_by_layer(6, 0.15, plot_graphs=True)
     return TaskGraphILPGenerator.construct_model(instance, 2)
 
 
@@ -137,6 +142,8 @@ class TaskGraphILPGenerator():
             model = cls.add_per_processor_ordering_constraint(instance_transitive_closure, relaxation_constant, model)
         
             return model
+        else:
+            raise Exception("q >= max_width not implemented")
 
     @classmethod
     def add_per_processor_ordering_constraint(cls, instance_transitive_closure, relaxation_constant, model):
@@ -246,8 +253,11 @@ class TaskGraphILPGenerator():
 
     @classmethod
     def add_processor_bound_constraint(cls, node_count, processor_count, model):
+        expr = model.w[1, node_count+1]
+        for i in range(2,node_count+1):
+            expr += model.w[i, node_count+1]
         model.processor_bound_constraint = pyo.Constraint(
-            expr=sum(model.w[:, node_count+1]) <= processor_count)
+            expr= expr <= processor_count)
         return model
 
 
@@ -255,6 +265,7 @@ np.random.seed(config.seed)
 opt = pyo.SolverFactory('gurobi')
 model = ilp_formulation()
 opt.solve(model)
+model.pprint()
 model.T.display()
 model.x.display()
 
