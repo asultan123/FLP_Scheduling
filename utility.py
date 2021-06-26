@@ -1,6 +1,12 @@
 from itertools import chain
 import networkx as nx
 
+def get_task_graph_max_width(instance):
+    topologically_sorted_instance = list(topological_sort_grouped(instance))
+    widths = map(len, topologically_sorted_instance)
+    max_width = max(widths)
+    return max_width
+
 def topological_sort_grouped(G):
     indegree_map = {v: d for v, d in G.in_degree() if d > 0}
     zero_indegree = [v for v, d in G.in_degree() if d == 0]
