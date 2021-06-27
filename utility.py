@@ -1,5 +1,34 @@
 from itertools import chain
 import networkx as nx
+from itertools import product
+from operator import itemgetter
+
+def bindings(processors, nodes):
+    return product(*[range(processors)]*nodes)
+
+def schedule(binding, grouped_top_sort):
+    sched = {}
+    time = 0
+    group_offset = 0
+    for group in grouped_top_sort:
+        group_time = time
+        group_binding = binding[group_offset: group_offset+len(group)]
+        sorted_group = sorted(
+            list(zip(group, group_binding)), key=itemgetter(1))
+        last_processor = sorted_group[0][1]
+        sched[sorted_group[0][0]] = group_time
+        for idx, (task, task_binding) in enumerate(sorted_group):
+            if idx == 0:
+                continue
+            group_time = group_time + 1 if task_binding == last_processor else time
+            sched[task] = group_time
+            last_processor = task_binding
+        group_offset += len(group)
+        time = makespan(sched)
+    return sched
+
+def makespan(sched):
+    return max(sched.values()) + 1
 
 def get_task_graph_max_width(instance):
     topologically_sorted_instance = list(topological_sort_grouped(instance))

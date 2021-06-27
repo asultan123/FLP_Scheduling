@@ -2,19 +2,21 @@ from itertools import chain
 import networkx as nx
 from pyomo.core.base.set import RangeSet
 import pyomo.environ as pyo
-import utility
+from utility import *
 
 class ILPWithImplicitProcessorBound():
     @classmethod
-    def construct_model(cls, instance, processor_count):
+    def construct_model(cls, instance, processor_count, initialize_with_greedy=False):
         model = pyo.ConcreteModel()
-        model = cls.create_variables(instance, model)
+        model = cls.create_variables(instance, model, initialize_with_greedy)
         model = cls.add_constraints(instance, model, processor_count)
         return model
 
     @classmethod
-    def create_variables(cls, instance, model):
+    def create_variables(cls, instance, model, initialize_with_greedy):
         model.T = pyo.Var(domain=pyo.NonNegativeIntegers, initialize=0)
+        if initialize_with_greedy:
+            
         model.x = pyo.Var(instance.nodes(),
                           domain=pyo.NonNegativeIntegers, initialize=0)
         n = len(instance.nodes())
@@ -60,7 +62,7 @@ class ILPWithImplicitProcessorBound():
             model = cls.add_per_processor_ordering_constraint(instance_transitive_closure, relaxation_constant, model)
         
         else:
-            raise Exception("Trivial Instance, not solvable with current ILP Formulation")
+            raise Exception("Instance width smaller than processor count, not solvable with current ILP Formulation")
             # model = cls.add_task_ordering_constraints_with_excess_processors(
             #     instance, nodes_with_no_predecessors, nodes_with_no_successors, model)
 
