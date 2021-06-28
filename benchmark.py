@@ -19,6 +19,7 @@ print = partial(print, flush=True)
 
 class Timeout_Monitor:
     next_instance = False
+    timeout_start = 0
     @classmethod
     def get_handler(cls):
         return partial(Timeout_Monitor.set_state, cls)
@@ -35,7 +36,11 @@ class Timeout_Monitor:
     def register_signal(cls):
         signal(SIGALRM, cls.get_handler())
     @classmethod
+    def time_remaining(cls):
+        return time.time() - cls.timeout_start
+    @classmethod
     def set_alarm(cls, timeout):
+        cls.timeout_start = time.time()
         alarm(timeout)
 
 

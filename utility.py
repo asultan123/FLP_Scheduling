@@ -3,6 +3,9 @@ import networkx as nx
 from itertools import product
 from operator import itemgetter
 
+def get_lower_bound(instance):
+    return len(list(topological_sort_grouped(instance)))
+
 def bindings(processors, nodes):
     return product(*[range(processors)]*nodes)
 

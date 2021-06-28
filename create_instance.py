@@ -96,16 +96,17 @@ np.random.seed(config.seed)
 instance = layer_by_layer(100, 0.50, plot_graphs=False)
 processor_count = 2
 timelimit = 60
+lower_bound = utility.get_lower_bound(instance)
 
 _, greedy_makespan = get_greedy_schedule(instance, processor_count)
 print("Greedy Makespan: {}".format(greedy_makespan))
 width = utility.get_task_graph_max_width(instance)
 print("Instance Max Width: {}".format(width))
-
+print("Lower bound on makespan: {}".format(lower_bound))
 
 print("Building Pyomo ILP Model")
 
-model = ILPWithImplicitProcessors.construct_model(instance, processor_count, get_timeout= lambda: timelimit)
+model = ILPWithImplicitProcessors.construct_model(instance, processor_count, lower_bound, get_timeout= lambda: timelimit)
 
 print("Solving Pyomo ILP Model")
 model.solve()
@@ -121,7 +122,7 @@ pp(model.get_makespan())
 
 print("Building GurobiPy ILP Model")
 opt = pyo.SolverFactory('gurobi')
-model = ILPWithExplicitProcessors.construct_model(instance, processor_count, get_timelimit= lambda: timelimit)
+model = ILPWithExplicitProcessors.construct_model(instance, processor_count, lower_bound, get_timelimit= lambda: timelimit)
 
 print("Solving GurobiPy ILP Model")
 model.solve()

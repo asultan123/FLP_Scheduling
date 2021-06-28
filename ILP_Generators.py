@@ -39,7 +39,7 @@ class ILPSchedulingModel():
 
 class ILPWithExplicitProcessors():
     @classmethod
-    def construct_model(cls, instance, processor_count, get_timelimit = None):
+    def construct_model(cls, instance, processor_count, lower_bound, get_timelimit = None):
         edges = list(instance.edges)
         n_edges = instance.number_of_edges()
         model = gp.Model("ilp")
@@ -81,6 +81,8 @@ class ILPWithExplicitProcessors():
         if get_timelimit is not None:
             model.Params.TimeLimit = get_timelimit()
 
+        model.Params.BestObjStop = lower_bound
+
         model_with_wrapper = ILPSchedulingModel(model,
                                                 solve_method=model.optimize,
                                                 get_schedule_method=partial(
@@ -93,7 +95,7 @@ class ILPWithExplicitProcessors():
 
 class ILPWithImplicitProcessors():
     @classmethod
-    def construct_model(cls, instance, processor_count, get_timeout= None, initialize_with_greedy=False):
+    def construct_model(cls, instance, processor_count, lower_bound, get_timeout= None, initialize_with_greedy=False):
         model = pyo.ConcreteModel()
         model = cls.create_variables(
             instance, model, processor_count, initialize_with_greedy)
@@ -111,6 +113,8 @@ class ILPWithImplicitProcessors():
         optimizer = pyo.SolverFactory('gurobi')
         if get_timeout is not None:
             optimizer.options['TimeLimit'] = get_timeout()
+
+        optimizer.options['BestObjStop'] = lower_bound
 
         model_with_wrapper = ILPSchedulingModel(model,
                                                 solve_method=partial(optimizer.solve, model),
