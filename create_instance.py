@@ -1,12 +1,13 @@
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
-from itertools import product
 import config
 from pyomo.core.base.set import RangeSet
 import pyomo.environ as pyo
 import utility
-from ILP_Generators import ILPWithImplicitProcessorBound
+from ILP_Generators import ILPWithExplicitProcessors, ILPWithImplicitProcessors
+from Greedy import get_greedy_schedule
+from pprint import pprint as pp
 
 def layer(subset_sizes, target):
     for layer_idx, subset_size in enumerate(np.cumsum(subset_sizes)):
@@ -75,12 +76,12 @@ def show_example_instances():
     layer_by_layer(config.node_max, np.random.rand(), plot_graphs=True)
 
 
-def ilp_formulation():
+def ilp_formulation(instance, processor_count):
     # instance = layer_by_layer(22, 0.20, plot_graphs=True)
-    instance = layer_by_layer(25, 0.30, plot_graphs=True)
     width = utility.get_task_graph_max_width(instance)
     print("Instance Max Width: {}".format(width))
-    return ILPWithImplicitProcessorBound.construct_model(instance, 3)
+    opt = pyo.SolverFactory('gurobi')
+    return ILPWithImplicitProcessors.construct_model(instance, processor_count, opt, initialize_with_greedy=True)
 
 
 def toggle_self_dependence(adj_matrix):
@@ -90,14 +91,43 @@ def toggle_self_dependence(adj_matrix):
 
 
 
+# Pyomo model
 np.random.seed(config.seed)
-opt = pyo.SolverFactory('gurobi')
-print("Building ILP Model")
-model = ilp_formulation()
-# model.pprint()
-print("Solving- ILP Model")
-opt.solve(model)
-print("ILP Solution Results")
-model.T.display()
-model.x.display()
+instance = layer_by_layer(100, 0.50, plot_graphs=False)
+processor_count = 2
+timelimit = 60
 
+_, greedy_makespan = get_greedy_schedule(instance, processor_count)
+print("Greedy Makespan: {}".format(greedy_makespan))
+width = utility.get_task_graph_max_width(instance)
+print("Instance Max Width: {}".format(width))
+
+
+print("Building Pyomo ILP Model")
+
+model = ILPWithImplicitProcessors.construct_model(instance, processor_count, get_timeout= lambda: timelimit)
+
+print("Solving Pyomo ILP Model")
+model.solve()
+
+print("Pyomo ILP Solution Results")
+print("Task Start Time")
+pp(model.get_schedule())
+print("Makespan")
+pp(model.get_makespan())
+
+
+
+
+print("Building GurobiPy ILP Model")
+opt = pyo.SolverFactory('gurobi')
+model = ILPWithExplicitProcessors.construct_model(instance, processor_count, get_timelimit= lambda: timelimit)
+
+print("Solving GurobiPy ILP Model")
+model.solve()
+
+print("GurobiPy ILP Solution Results")
+print("Task Start Time")
+pp(model.get_schedule())
+print("Makespan")
+pp(model.get_makespan())
