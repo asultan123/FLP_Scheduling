@@ -1,3 +1,5 @@
+from ILP_Generators import run_instance_ilp
+from utility import get_task_graph_max_width
 from numpy import sign
 from config import *
 from create_instance import *
@@ -13,6 +15,9 @@ from numba import jit
 from pprint import pprint as pp
 import os
 import gurobipy
+from Exhausitve import run_instance_exhaustive
+from Greedy import run_instance_naive_greedy
+from ILP_Generators import ILPWithImplicitProcessors, ILPWithExplicitProcessors
 
 print = partial(print, flush=True)
 
@@ -42,6 +47,9 @@ class Timeout_Monitor:
     def set_alarm(cls, timeout):
         cls.timeout_start = time.time()
         alarm(timeout)
+    @classmethod
+    def cancel_alarm(cls):
+        alarm(0)
 
 
 
@@ -75,7 +83,7 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
             monitor.reset_state()
             monitor.set_alarm(instance_timeout)
             while not monitor.timeout():
-                graph_instance = layer_by_layer(node_count, np.random.rand(), config.seed)
+                graph_instance = layer_by_layer(node_count, config.seed)
                 _, bindings_solved, solve_time = method(graph_instance, processor_count, node_count, monitor)
                 cum_solve_time += solve_time
                 # Todo: fix how "solved instances" are identified
@@ -83,10 +91,11 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
                     solved_count += 1
             # adjust to exclude generation time
             solved_time_ratio = cum_solve_time/instance_timeout
-            solved_count = int(solved_count/solved_time_ratio)
+            solved_count = int(solved_count/solved_time_ratio) if solved_time_ratio > 0 else 0
             print("Process {}: Solved ~{} instances".format(
                 process_idx, solved_count))
             solve_log[(node_count, processor_count)] = solved_count
+            
             if(allow_early_termination and solved_count == 0):
                 current_processor_upper_bound -= 1
                 if cur_it == 0 or current_processor_upper_bound < processor_min:
@@ -125,9 +134,11 @@ def main():
     elif args.method == 'naive-greedy':
         benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
                                 config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, run_instance_naive_greedy)
-    elif args.method == 'ilp_1':
-        # TODO ADD INSTANCE PRE-CONVERSION TO ILP MODEL
-        pass
+    elif args.method == 'ilp_implicit':
+        run_instance_ilp_implicit = partial(run_instance_ilp, ILPWithImplicitProcessors)
+        benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
+                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, run_instance_ilp_implicit)
+
 
 
     aggregate_solve_log = {}

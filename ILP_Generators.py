@@ -8,7 +8,27 @@ import gurobipy as gp
 from gurobipy import GRB
 from functools import partial
 from collections import OrderedDict
+import time
 
+def run_instance_ilp(formulation, graph_instance, processor_count, node_count, monitor):
+    solve_start = time.time()
+    lower_bound = utility.get_lower_bound(graph_instance)
+    bindings_solved = 0
+    makespan = 0
+    schedule = {}
+    if processor_count < utility.get_task_graph_max_width(graph_instance):
+        model = formulation.construct_model(graph_instance, processor_count, lower_bound, monitor.time_remaining)
+        if model.solve():
+            bindings_solved = processor_count**node_count #equivelent space "searched"
+            makespan = model.get_makespan()
+            schedule = model.get_schedule()
+        else:
+            bindings_solved = 0
+    else:
+        bindings_solved = processor_count**node_count
+        schedule, makespan = get_greedy_schedule(graph_instance, processor_count)
+    solve_end = time.time()
+    return (makespan, schedule), bindings_solved, solve_end-solve_start
 
 class ILPSchedulingModel():
     def __init__(self, model, solve_method, get_schedule_method, get_makespan_method, get_model_description_method=None):
@@ -21,8 +41,9 @@ class ILPSchedulingModel():
     def solve(self):
         try:
             self._solve_method()
+            return True
         except:
-            print("Solver did not find a solution")
+            return False
 
     def description(self):
         self._description_method()
