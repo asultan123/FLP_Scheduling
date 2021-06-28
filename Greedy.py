@@ -20,7 +20,7 @@ def get_greedy_schedule(graph_instance, processor_count):
     max_latency_sched = makespan(greedy_sched)
     return greedy_sched, max_latency_sched
         
-def run_instance_naive_greedy(graph_instance, processor_count, node_count, monitor):
+def run_instance_naive_greedy(graph_instance, processor_count, node_count, monitor, options):
     solve_start = time.time()
     max_latency_sched, greedy_sched = get_greedy_schedule(graph_instance, processor_count)
     # TODO Fix instance solved identifier

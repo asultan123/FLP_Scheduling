@@ -9,20 +9,31 @@ from gurobipy import GRB
 from functools import partial
 from collections import OrderedDict
 import time
+import config
+from pyomo.opt import SolverStatus, TerminationCondition
 
-def run_instance_ilp(formulation, graph_instance, processor_count, node_count, monitor):
+def run_instance_ilp(formulation, graph_instance, processor_count, node_count, monitor, options):
     solve_start = time.time()
     lower_bound = utility.get_lower_bound(graph_instance)
     bindings_solved = 0
     makespan = 0
     schedule = {}
     if processor_count < utility.get_task_graph_max_width(graph_instance):
-        model = formulation.construct_model(graph_instance, processor_count, lower_bound, monitor.time_remaining)
-        if model.solve():
-            bindings_solved = processor_count**node_count #equivelent space "searched"
+        model = formulation.construct_model(graph_instance, processor_count, get_timeout = monitor.time_remaining)
+        results = model.solve()
+        if results is not None:
             makespan = model.get_makespan()
             schedule = model.get_schedule()
+            if results.solver.status != SolverStatus.ok:
+                if results.solver.termination_condition == TerminationCondition.maxTimeLimit:
+                    bindings_solved = 0 #equivelent space "searched"
+                else:
+                    raise Exception("Invalid solver termination state")
+            else:
+                bindings_solved = processor_count**node_count #equivelent space "searched"
+
         else:
+            # todo check why this execution path may happen (why would solver fail to return in case of other ILP)
             bindings_solved = 0
     else:
         bindings_solved = processor_count**node_count
@@ -31,19 +42,19 @@ def run_instance_ilp(formulation, graph_instance, processor_count, node_count, m
     return (makespan, schedule), bindings_solved, solve_end-solve_start
 
 class ILPSchedulingModel():
-    def __init__(self, model, solve_method, get_schedule_method, get_makespan_method, get_model_description_method=None):
+    def __init__(self, model, optimizer, solve_method, get_schedule_method, get_makespan_method, get_model_description_method=None):
         self._model = model
         self._solve_method = solve_method
         self._get_schedule_method = get_schedule_method
         self._get_makespan_method = get_makespan_method
         self._description_method = get_model_description_method
+        self._optimizer = optimizer
 
     def solve(self):
         try:
-            self._solve_method()
-            return True
+            return self._solve_method()
         except:
-            return False
+            return None
 
     def description(self):
         self._description_method()
@@ -56,11 +67,14 @@ class ILPSchedulingModel():
 
     def get_model(self):
         return self._model
+    
+    def get_optimizer(self):
+        return self._optimizer
 
 
 class ILPWithExplicitProcessors():
     @classmethod
-    def construct_model(cls, instance, processor_count, lower_bound, get_timelimit = None):
+    def construct_model(cls, instance, processor_count, lower_bound= None, get_timeout = None):
         edges = list(instance.edges)
         n_edges = instance.number_of_edges()
         model = gp.Model("ilp")
@@ -99,10 +113,13 @@ class ILPWithExplicitProcessors():
                 print("Solver did not find a solution")
                 return None                     
         
-        if get_timelimit is not None:
-            model.Params.TimeLimit = get_timelimit()
+        if get_timeout is not None:
+            model.Params.TimeLimit = get_timeout()
 
-        model.Params.BestObjStop = lower_bound
+        if lower_bound is not None:
+            model.Params.BestObjStop = lower_bound
+
+        model.Params.Threads = config.gurobi_threads
 
         model_with_wrapper = ILPSchedulingModel(model,
                                                 solve_method=model.optimize,
@@ -116,7 +133,7 @@ class ILPWithExplicitProcessors():
 
 class ILPWithImplicitProcessors():
     @classmethod
-    def construct_model(cls, instance, processor_count, lower_bound, get_timeout= None, initialize_with_greedy=False):
+    def construct_model(cls, instance, processor_count, lower_bound = None, get_timeout= None, initialize_with_greedy=False):
         model = pyo.ConcreteModel()
         model = cls.create_variables(
             instance, model, processor_count, initialize_with_greedy)
@@ -135,9 +152,13 @@ class ILPWithImplicitProcessors():
         if get_timeout is not None:
             optimizer.options['TimeLimit'] = get_timeout()
 
-        optimizer.options['BestObjStop'] = lower_bound
+        if lower_bound is not None:
+            optimizer.options['BestObjStop'] = lower_bound
+
+        optimizer.options['Threads'] = config.gurobi_threads
 
         model_with_wrapper = ILPSchedulingModel(model,
+                                                optimizer,
                                                 solve_method=partial(optimizer.solve, model),
                                                 get_schedule_method=partial(
                                                     get_schedule_method, model),

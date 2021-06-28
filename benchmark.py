@@ -1,3 +1,4 @@
+from pyomo import opt
 from ILP_Generators import run_instance_ilp
 from utility import get_task_graph_max_width
 from numpy import sign
@@ -53,7 +54,7 @@ class Timeout_Monitor:
 
 
 
-def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout, worker_count, iteration_count, allow_early_termination, method, start_idx):
+def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout, worker_count, iteration_count, allow_early_termination, options, method, start_idx):
 
     monitor = Timeout_Monitor()
     monitor.register_signal()
@@ -84,7 +85,7 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
             monitor.set_alarm(instance_timeout)
             while not monitor.timeout():
                 graph_instance = layer_by_layer(node_count, config.seed)
-                _, bindings_solved, solve_time = method(graph_instance, processor_count, node_count, monitor)
+                _, bindings_solved, solve_time = method(graph_instance, processor_count, node_count, monitor, options)
                 cum_solve_time += solve_time
                 # Todo: fix how "solved instances" are identified
                 if bindings_solved == processor_count**node_count:
@@ -130,16 +131,14 @@ def main():
 
     if args.method == 'exhaustive':
         benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
-                                 config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, True, run_instance_exhaustive)
+                                 config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, True, None, run_instance_exhaustive)
     elif args.method == 'naive-greedy':
         benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
-                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, run_instance_naive_greedy)
+                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, None, run_instance_naive_greedy)
     elif args.method == 'ilp_implicit':
         run_instance_ilp_implicit = partial(run_instance_ilp, ILPWithImplicitProcessors)
         benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
-                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, run_instance_ilp_implicit)
-
-
+                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, None, run_instance_ilp_implicit)
 
     aggregate_solve_log = {}
 

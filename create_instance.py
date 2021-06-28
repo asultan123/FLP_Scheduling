@@ -2,7 +2,6 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 import config
-from pyomo.core.base.set import RangeSet
 import pyomo.environ as pyo
 import utility
 from ILP_Generators import ILPWithExplicitProcessors, ILPWithImplicitProcessors
