@@ -18,8 +18,8 @@ import os
 import gurobipy
 from Exhausitve import run_instance_exhaustive
 from Greedy import run_instance_naive_greedy
-from ILP_Generators import ILPWithImplicitProcessors, ILPWithExplicitProcessors
-
+from ILP_Generators import ILPWithImplicitProcessors
+from LocalSearch import run_instance_genetic
 
 print = partial(print, flush=True)
 
@@ -132,18 +132,25 @@ def main():
 
     if args.method == 'exhaustive':
         benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
-                                 config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, True, None, run_instance_exhaustive)
+                                 config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, True, run_instance_exhaustive)
     elif args.method == 'naive-greedy':
         benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
-                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, None, run_instance_naive_greedy)
+                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, run_instance_naive_greedy)
     elif args.method == 'ilp_implicit':
         run_instance_ilp_implicit = partial(run_instance_ilp, ILPWithImplicitProcessors)
         benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
-                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, None, run_instance_ilp_implicit)
-    elif args.method == 'steepest_decent':
-        run_instance_ilp_implicit = partial(run_instance_ilp, ILPWithImplicitProcessors)
+                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, run_instance_ilp_implicit)
+    elif args.method == 'genetic':
+        options = {}
+        options['population_size'] = 50
+        options['cut_off'] = 25
+        options['mutation_rate'] = 0.25
+        options['fitness_tolerance'] = 0.25
+        options['max_steps_with_no_change'] = 20
+
+        run_instance_genetic_with_options = partial(run_instance_genetic, options=options)
         benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
-                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, None, run_instance_ilp_implicit)
+                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, run_instance_genetic_with_options)
 
 
     aggregate_solve_log = {}
@@ -164,7 +171,9 @@ def main():
             pickle.dump(aggregate_solve_log, file)
 
 def compare_results():
-    
+    for node_count in range(4, 50):
+        for processor_count in range(4, 9):
+            pass
 
 if __name__ == "__main__":
     main()

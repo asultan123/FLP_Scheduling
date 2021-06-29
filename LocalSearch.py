@@ -37,7 +37,7 @@ def run_instance_steepest_descent(graph_instance, processor_count, node_count, m
     selected_makespan = init_makespan
     equal_makespans = 0
     # Stop search when no better solutions are found after 20 steps
-    while equal_makespans < 20 and not monitor.timeout():
+    while equal_makespans < 20:
         # Neighborhood search
         for i in range(node_count):
             for j in range(processor_count):
@@ -75,7 +75,8 @@ def local_search(individual, grouped_top_sort, processor_count, node_count):
 
     makespan_best = init_makespan  # start with a big value
     selected_binding = individual
-
+    binding_best = individual
+    
     for i in range(node_count):
         for j in range(processor_count):
             if selected_binding[i] == j:
@@ -182,7 +183,7 @@ def run_instance_genetic(graph_instance, processor_count, node_count, monitor, o
     
     steps_with_no_change = 0
     last_avg_population_fitness = 0
-    while True:
+    while not monitor.timeout():
         for individual in population:
             individual = local_search(
                 individual, grouped_top_sort, processor_count, node_count)
@@ -215,9 +216,9 @@ def run_instance_genetic(graph_instance, processor_count, node_count, monitor, o
             best_sched = candidate_best_sched
             best_makespan = candidate_best_makespan
             
-        print("Average population fitness: {}".format(avg_population_fitness))
+        # print("Average population fitness: {}".format(avg_population_fitness))
 
-    print("Best Makespan: {}".format(best_makespan))
+    # print("Best Makespan: {}".format(best_makespan))
     bindings_solved = processor_count**node_count  # equivelent space "searched"
     solve_end = time.time()
     return (best_makespan, best_sched), bindings_solved, solve_end-solve_start
@@ -251,4 +252,4 @@ def steepest_decent_instance_test():
     
     run_instance_steepest_descent(instance, processor_count, node_count, None, None)
 
-genetic_instance_test()
+# steepest_decent_instance_test()
