@@ -67,8 +67,8 @@ def run_instance_steepest_descent(graph_instance, processor_count, node_count, m
     selected_sched = schedule(selected_binding, grouped_top_sort)
     solve_end = time.time()
     if ret_value is not None:
-        ret_value.makespan = selected_makespan
-        ret_value.sched = selected_sched
+        ret_value["makespan"] = selected_makespan
+        ret_value["sched"] = selected_sched
     return (selected_makespan, selected_sched), bindings_solved, solve_end-solve_start
 
 
@@ -225,8 +225,8 @@ def run_instance_genetic(graph_instance, processor_count, node_count, monitor, o
     bindings_solved = processor_count**node_count  # equivelent space "searched"
     solve_end = time.time()
     if ret_value is not None:
-        ret_value.makespan = best_makespan
-        ret_value.sched = best_sched
+        ret_value["makespan"] = best_makespan
+        ret_value["sched"] = best_sched
     return (best_makespan, best_sched), bindings_solved, solve_end-solve_start
 
 

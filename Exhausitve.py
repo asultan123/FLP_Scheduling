@@ -21,6 +21,6 @@ def run_instance_exhaustive(graph_instance, processors, nodes, monitor, ret_valu
             break
     solve_end = time.time()
     if ret_value is not None:
-        ret_value.makespan = opt_sched_latency
-        ret_value.sched = opt_sched
+        ret_value["makespan"] = opt_sched_latency
+        ret_value["sched"] = opt_sched
     return (opt_sched_latency, opt_sched), bindings_solved, solve_end-solve_start

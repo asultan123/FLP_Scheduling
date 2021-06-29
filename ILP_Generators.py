@@ -40,8 +40,8 @@ def run_instance_ilp(formulation, graph_instance, processor_count, node_count, m
         schedule, makespan = get_greedy_schedule(graph_instance, processor_count)
     solve_end = time.time()
     if ret_value is not None:
-        ret_value.makespan = makespan
-        ret_value.sched = schedule
+        ret_value["makespan"] = makespan
+        ret_value["sched"] = schedule
     return (makespan, schedule), bindings_solved, solve_end-solve_start
 
 class ILPSchedulingModel():
