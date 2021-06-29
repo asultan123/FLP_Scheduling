@@ -182,7 +182,7 @@ def main():
 
 def compare_results():
     np.random.seed(config.seed)  # check correct way of seeding
-    instance_timeout = 10
+    instance_timeout = 20
     monitor = Timeout_Monitor()
     monitor.register_signal()
     options = {}
@@ -197,7 +197,7 @@ def compare_results():
     options['random_init'] = False
 
     # Both
-    options['max_steps_with_no_change'] = 200    
+    options['max_steps_with_no_change'] = 100    
 
     manager = Manager()
     ret_value_exhaustive = manager.dict()
@@ -211,6 +211,7 @@ def compare_results():
 
             graph_instance = layer_by_layer(node_count, 0.20)
             lower_bound = utility.get_lower_bound(graph_instance)
+            upper_bound = len(graph_instance.nodes())
             
             monitor.reset_state()
             

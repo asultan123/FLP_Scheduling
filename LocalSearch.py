@@ -195,7 +195,7 @@ def run_instance_genetic(graph_instance, processor_count, node_count, monitor, o
     steps_with_no_change = 0
     last_avg_population_fitness = 0
     timeout = False
-    while not monitor.timeout():
+    while True:
         
         if monitor.timeout():
             timeout = True
