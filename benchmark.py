@@ -20,6 +20,7 @@ from Exhausitve import run_instance_exhaustive
 from Greedy import run_instance_naive_greedy
 from ILP_Generators import ILPWithImplicitProcessors, ILPWithExplicitProcessors
 
+
 print = partial(print, flush=True)
 
 
@@ -54,7 +55,7 @@ class Timeout_Monitor:
 
 
 
-def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout, worker_count, iteration_count, allow_early_termination, options, method, start_idx):
+def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout, worker_count, iteration_count, allow_early_termination, method, start_idx):
 
     monitor = Timeout_Monitor()
     monitor.register_signal()
@@ -85,7 +86,7 @@ def benchmark(processor_max, processor_min, node_max, node_min, instance_timeout
             monitor.set_alarm(instance_timeout)
             while not monitor.timeout():
                 graph_instance = layer_by_layer(node_count, config.seed)
-                _, bindings_solved, solve_time = method(graph_instance, processor_count, node_count, monitor, options)
+                _, bindings_solved, solve_time = method(graph_instance, processor_count, node_count, monitor)
                 cum_solve_time += solve_time
                 # Todo: fix how "solved instances" are identified
                 if bindings_solved == processor_count**node_count:
@@ -139,6 +140,11 @@ def main():
         run_instance_ilp_implicit = partial(run_instance_ilp, ILPWithImplicitProcessors)
         benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
                                 config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, None, run_instance_ilp_implicit)
+    elif args.method == 'steepest_decent':
+        run_instance_ilp_implicit = partial(run_instance_ilp, ILPWithImplicitProcessors)
+        benchmark_instance = partial(benchmark, config.processor_max, config.processor_min,
+                                config.node_max, config.node_min, args.timeout, config.core_count, iteration_count, False, None, run_instance_ilp_implicit)
+
 
     aggregate_solve_log = {}
 

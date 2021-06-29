@@ -3,7 +3,7 @@ from create_instance import *
 import time
 from utility import *
 
-def run_instance_exhaustive(graph_instance, processors, nodes, monitor, options):
+def run_instance_exhaustive(graph_instance, processors, nodes, monitor):
     solve_start = time.time()
     grouped_top_sort = list(topological_sort_grouped(graph_instance))
     # TODO: Fix optimal_sched_latency return

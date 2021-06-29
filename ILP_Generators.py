@@ -12,7 +12,7 @@ import time
 import config
 from pyomo.opt import SolverStatus, TerminationCondition
 
-def run_instance_ilp(formulation, graph_instance, processor_count, node_count, monitor, options):
+def run_instance_ilp(formulation, graph_instance, processor_count, node_count, monitor):
     solve_start = time.time()
     lower_bound = utility.get_lower_bound(graph_instance)
     bindings_solved = 0
