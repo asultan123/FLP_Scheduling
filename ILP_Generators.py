@@ -12,7 +12,7 @@ import time
 import config
 from pyomo.opt import SolverStatus, TerminationCondition
 
-def run_instance_ilp(formulation, graph_instance, processor_count, node_count, monitor):
+def run_instance_ilp(formulation, graph_instance, processor_count, node_count, monitor, ret_value):
     solve_start = time.time()
     lower_bound = utility.get_lower_bound(graph_instance)
     bindings_solved = 0
@@ -39,6 +39,9 @@ def run_instance_ilp(formulation, graph_instance, processor_count, node_count, m
         bindings_solved = processor_count**node_count
         schedule, makespan = get_greedy_schedule(graph_instance, processor_count)
     solve_end = time.time()
+    if ret_value is not None:
+        ret_value.makespan = makespan
+        ret_value.sched = schedule
     return (makespan, schedule), bindings_solved, solve_end-solve_start
 
 class ILPSchedulingModel():

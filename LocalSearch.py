@@ -9,7 +9,7 @@ from create_instance import layer_by_layer
 import config
 import utility
 
-def run_instance_steepest_descent(graph_instance, processor_count, node_count, monitor, options):
+def run_instance_steepest_descent(graph_instance, processor_count, node_count, monitor, options, ret_value = None):
     solve_start = time.time()
 
     grouped_top_sort = list(topological_sort_grouped(graph_instance))
@@ -30,14 +30,14 @@ def run_instance_steepest_descent(graph_instance, processor_count, node_count, m
     # Makespan (cost) of initial solution
     init_sched = schedule(selected_binding, grouped_top_sort)
     init_makespan = makespan(init_sched)
-    print("Initial ({}) solution makespan: {}".format(
-        "random" if random_init == True else "greedy", init_makespan))
+    # print("Initial ({}) solution makespan: {}".format(
+    #     "random" if random_init == True else "greedy", init_makespan))
 
     makespan_best = node_count  # start with a big value
     selected_makespan = init_makespan
     equal_makespans = 0
     # Stop search when no better solutions are found after 20 steps
-    while equal_makespans < 20:
+    while equal_makespans < 20 and not monitor.timeout():
         # Neighborhood search
         for i in range(node_count):
             for j in range(processor_count):
@@ -63,9 +63,12 @@ def run_instance_steepest_descent(graph_instance, processor_count, node_count, m
             selected_binding = binding_best.copy()
 #        print(selected_makespan)
 
-    print("Best solution makespan: {}".format(selected_makespan))
+    # print("Best solution makespan: {}".format(selected_makespan))
     selected_sched = schedule(selected_binding, grouped_top_sort)
     solve_end = time.time()
+    if ret_value is not None:
+        ret_value.makespan = selected_makespan
+        ret_value.sched = selected_sched
     return (selected_makespan, selected_sched), bindings_solved, solve_end-solve_start
 
 
@@ -163,7 +166,7 @@ def random_population_initialization(processor_count, node_count, population_siz
     return population
 
 
-def run_instance_genetic(graph_instance, processor_count, node_count, monitor, options):
+def run_instance_genetic(graph_instance, processor_count, node_count, monitor, options, ret_value = None):
     solve_start = time.time()
 
     grouped_top_sort = list(topological_sort_grouped(graph_instance))
@@ -221,6 +224,9 @@ def run_instance_genetic(graph_instance, processor_count, node_count, monitor, o
     # print("Best Makespan: {}".format(best_makespan))
     bindings_solved = processor_count**node_count  # equivelent space "searched"
     solve_end = time.time()
+    if ret_value is not None:
+        ret_value.makespan = best_makespan
+        ret_value.sched = best_sched
     return (best_makespan, best_sched), bindings_solved, solve_end-solve_start
 
 
@@ -239,7 +245,8 @@ def genetic_instance_test():
     options['fitness_tolerance'] = 0.25
     options['max_steps_with_no_change'] = 20
 
-    run_instance_genetic(instance, processor_count, node_count, None, options)
+    (best_makespan, best_sched), bindings_solved, solve_time = run_instance_genetic(instance, processor_count, node_count, None, options)
+    return best_makespan, best_sched
 
 
 def steepest_decent_instance_test():
@@ -251,5 +258,3 @@ def steepest_decent_instance_test():
     print("Instance Lower Bound {}".format(lower_bound))
     
     run_instance_steepest_descent(instance, processor_count, node_count, None, None)
-
-# steepest_decent_instance_test()

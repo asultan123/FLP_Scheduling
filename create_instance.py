@@ -136,8 +136,6 @@ def ilp_instance_test():
     pp(model.get_makespan())
 
 
-
-
     print("Building GurobiPy ILP Model")
     opt = pyo.SolverFactory('gurobi')
     model = ILPWithExplicitProcessors.construct_model(instance, processor_count, lower_bound, get_timelimit= lambda: timelimit)
