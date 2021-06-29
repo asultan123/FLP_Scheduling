@@ -37,7 +37,7 @@ def run_instance_steepest_descent(graph_instance, processor_count, node_count, m
     selected_makespan = init_makespan
     equal_makespans = 0
     # Stop search when no better solutions are found after 20 steps
-    while equal_makespans < 20:
+    while equal_makespans < 20 and not monitor.timeout():
         # Neighborhood search
         for i in range(node_count):
             for j in range(processor_count):
@@ -53,8 +53,6 @@ def run_instance_steepest_descent(graph_instance, processor_count, node_count, m
                     makespan_best = makespan_n
                     binding_best = selected_binding_n.copy()
 
-                # if monitor.timeout():
-                #     break
         # Move to best neighbor if better or equal to current solution
         if makespan_best < selected_makespan:
             equal_makespans = 0
@@ -180,7 +178,7 @@ def run_instance_genetic(graph_instance, processor_count, node_count, monitor, o
 
     steps_with_no_change = 0
     last_avg_population_fitness = 0
-    while True:
+    while not monitor.timeout():
         for individual in population:
             individual = local_search(
                 individual, grouped_top_sort, processor_count, node_count)
@@ -243,4 +241,4 @@ def steepest_decent_instance_test():
     
     run_instance_steepest_descent(instance, processor_count, node_count, None, None)
 
-steepest_decent_instance_test()
+genetic_instance_test()
