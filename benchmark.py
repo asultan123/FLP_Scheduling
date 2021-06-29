@@ -163,6 +163,8 @@ def main():
             import pickle
             pickle.dump(aggregate_solve_log, file)
 
+def compare_results():
+    
 
 if __name__ == "__main__":
     main()

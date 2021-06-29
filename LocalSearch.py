@@ -175,10 +175,14 @@ def run_instance_genetic(graph_instance, processor_count, node_count, monitor, o
 
     population = random_population_initialization(
         processor_count, node_count, population_size)
-
+    best_binding = selection_operator(
+        population, 1, grouped_top_sort)[0]
+    best_sched = schedule(best_binding, grouped_top_sort)
+    best_makespan = makespan(best_sched)
+    
     steps_with_no_change = 0
     last_avg_population_fitness = 0
-    while not monitor.timeout():
+    while True:
         for individual in population:
             individual = local_search(
                 individual, grouped_top_sort, processor_count, node_count)
@@ -201,13 +205,19 @@ def run_instance_genetic(graph_instance, processor_count, node_count, monitor, o
             break
         
         last_avg_population_fitness = avg_population_fitness
+        candidate_best_binding = selection_operator(
+            population, 1, grouped_top_sort)[0]
+        candidate_best_sched = schedule(candidate_best_binding, grouped_top_sort)
+        candidate_best_makespan = makespan(candidate_best_sched)
 
+        if best_makespan >= candidate_best_makespan:
+            best_binding = candidate_best_binding
+            best_sched = candidate_best_sched
+            best_makespan = candidate_best_makespan
+            
         print("Average population fitness: {}".format(avg_population_fitness))
 
-    best_binding = selection_operator(
-        population, 1, grouped_top_sort)[0]
-    best_sched = schedule(best_binding, grouped_top_sort)
-    best_makespan = makespan(best_sched)
+    print("Best Makespan: {}".format(best_makespan))
     bindings_solved = processor_count**node_count  # equivelent space "searched"
     solve_end = time.time()
     return (best_makespan, best_sched), bindings_solved, solve_end-solve_start
@@ -215,7 +225,7 @@ def run_instance_genetic(graph_instance, processor_count, node_count, monitor, o
 
 def genetic_instance_test():
     np.random.seed(config.seed)
-    node_count = 100
+    node_count = 20
     instance = layer_by_layer(node_count, 0.25, plot_graphs=False)
     processor_count = 4
     lower_bound = utility.get_lower_bound(instance)
