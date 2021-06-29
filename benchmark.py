@@ -10,7 +10,7 @@ from signal import signal, alarm, SIGALRM
 from math import log2
 import time
 import argparse
-from multiprocessing import Pool, Event, Process
+from multiprocessing import Pool, Event, Process, Manager
 from functools import partial
 from numba import jit
 from pprint import pprint as pp
@@ -20,6 +20,7 @@ from Exhausitve import run_instance_exhaustive
 from Greedy import run_instance_naive_greedy
 from ILP_Generators import ILPWithImplicitProcessors
 from LocalSearch import run_instance_genetic, run_instance_steepest_descent
+import math
 
 print = partial(print, flush=True)
 
@@ -32,8 +33,6 @@ class Timeout_Monitor:
         return partial(Timeout_Monitor.set_state, cls)
     @classmethod
     def timeout(cls):
-        if cls.time_remaining() == 0:
-            print("TIMEOUT!")
         return cls.time_remaining() == 0  # Hack to get timer to work when only one exist for all processes
     @classmethod
     def reset_state(cls):
@@ -182,39 +181,44 @@ def main():
             pickle.dump(aggregate_solve_log, file)
 
 def compare_results():
+    np.random.seed(config.seed)  # check correct way of seeding
     instance_timeout = 10
     monitor = Timeout_Monitor()
     monitor.register_signal()
     options = {}
-    
+
     # Genetic Options
-    options['population_size'] = 50
-    options['cut_off'] = 25
-    options['mutation_rate'] = 0.25
+    options['population_size'] = 25
+    options['cut_off'] = 10
+    options['mutation_rate'] = 0.5
     options['fitness_tolerance'] = 0.25
-    options['max_steps_with_no_change'] = 20    
     
     # Steepest Decent
     options['random_init'] = False
-    
+
+    # Both
+    options['max_steps_with_no_change'] = 200    
+
+    manager = Manager()
+    ret_value_exhaustive = manager.dict()
+    ret_value_greedy = manager.dict()
+    ret_value_ilp = manager.dict()
+    ret_value_genetic = manager.dict()
+    ret_value_descent = manager.dict()
+                
     for node_count in range(50, 52):
-        for processor_count in range(2, 9):
-            
-            graph_instance = layer_by_layer(node_count, 0.30)
+        for processor_count in range(5, 9):
+
+            graph_instance = layer_by_layer(node_count, 0.20)
             lower_bound = utility.get_lower_bound(graph_instance)
             
-            exhaustive = partial(run_instance_exhaustive, graph_instance, processor_count, node_count, monitor)
-            greedy = partial(run_instance_naive_greedy, graph_instance, processor_count, node_count, monitor)
-            ilp = partial(run_instance_ilp, ILPWithImplicitProcessors, graph_instance, processor_count, node_count, monitor)
-            genetic = partial(run_instance_genetic, graph_instance, processor_count, node_count, monitor, options)
-            descent = partial(run_instance_steepest_descent, graph_instance, processor_count, node_count, monitor, options)
             monitor.reset_state()
             
-            exhaustive_proc = Process(target = exhaustive)
-            greedy_proc = Process(target = greedy)
-            ilp_proc = Process(target = ilp)
-            genetic_proc = Process(target = genetic)
-            descent_proc = Process(target = descent)
+            exhaustive_proc = Process(target = run_instance_exhaustive, args=[graph_instance, processor_count, node_count, monitor, ret_value_exhaustive])
+            greedy_proc = Process(target = run_instance_naive_greedy, args=[graph_instance, processor_count, node_count, monitor, ret_value_greedy])
+            ilp_proc = Process(target = run_instance_ilp, args=[ILPWithImplicitProcessors, graph_instance, processor_count, node_count, monitor, ret_value_ilp])
+            genetic_proc = Process(target = run_instance_genetic, args=[graph_instance, processor_count, node_count, monitor, options, ret_value_genetic])
+            descent_proc = Process(target = run_instance_steepest_descent, args=[graph_instance, processor_count, node_count, monitor, options, ret_value_descent])
             
             monitor.set_alarm(instance_timeout)
             
@@ -231,7 +235,12 @@ def compare_results():
             genetic_proc.join()
             descent_proc.join()
             
-            print("Done")         
+            pp("ret_value_exhaustive: {}".format(ret_value_exhaustive))
+            pp("ret_value_greedy: {}".format(ret_value_greedy))
+            pp("ret_value_ilp: {}".format(ret_value_ilp))
+            pp("ret_value_genetic: {}".format(ret_value_genetic))
+            pp("ret_value_descent: {}".format(ret_value_descent))       
+            print("Done")  
 
 
                                            

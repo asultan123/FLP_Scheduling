@@ -12,12 +12,13 @@ import time
 import config
 from pyomo.opt import SolverStatus, TerminationCondition
 
-def run_instance_ilp(formulation, graph_instance, processor_count, node_count, monitor, ret_value):
+def run_instance_ilp(formulation, graph_instance, processor_count, node_count, monitor, ret_value = None):
     solve_start = time.time()
     lower_bound = utility.get_lower_bound(graph_instance)
     bindings_solved = 0
     makespan = 0
     schedule = {}
+    timed_out = False
     if processor_count < utility.get_task_graph_max_width(graph_instance):
         model = formulation.construct_model(graph_instance, processor_count, get_timeout = monitor.time_remaining)
         results = model.solve()
@@ -27,6 +28,8 @@ def run_instance_ilp(formulation, graph_instance, processor_count, node_count, m
             if results.solver.status != SolverStatus.ok:
                 if results.solver.termination_condition == TerminationCondition.maxTimeLimit:
                     bindings_solved = 0 #equivelent space "searched"
+                    if ret_value is not None:
+                        timed_out = True
                 else:
                     raise Exception("Invalid solver termination state")
             else:
@@ -42,6 +45,7 @@ def run_instance_ilp(formulation, graph_instance, processor_count, node_count, m
     if ret_value is not None:
         ret_value["makespan"] = makespan
         ret_value["sched"] = schedule
+        ret_value["Timeout"] = timed_out
     return (makespan, schedule), bindings_solved, solve_end-solve_start
 
 class ILPSchedulingModel():

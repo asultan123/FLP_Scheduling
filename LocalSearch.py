@@ -36,8 +36,13 @@ def run_instance_steepest_descent(graph_instance, processor_count, node_count, m
     makespan_best = node_count  # start with a big value
     selected_makespan = init_makespan
     equal_makespans = 0
+    timeout = False
     # Stop search when no better solutions are found after 20 steps
-    while equal_makespans < 20 and not monitor.timeout():
+    while equal_makespans < options['max_steps_with_no_change']:
+        
+        if monitor.timeout():
+            timeout = True
+            break
         # Neighborhood search
         for i in range(node_count):
             for j in range(processor_count):
@@ -52,6 +57,7 @@ def run_instance_steepest_descent(graph_instance, processor_count, node_count, m
                 if makespan_best >= makespan_n:
                     makespan_best = makespan_n
                     binding_best = selected_binding_n.copy()
+            
 
         # Move to best neighbor if better or equal to current solution
         if makespan_best < selected_makespan:
@@ -61,7 +67,8 @@ def run_instance_steepest_descent(graph_instance, processor_count, node_count, m
         elif makespan_best == selected_makespan:
             equal_makespans += 1
             selected_binding = binding_best.copy()
-#        print(selected_makespan)
+            
+        # print("Current Best Makespan: {}".format(makespan_best))
 
     # print("Best solution makespan: {}".format(selected_makespan))
     selected_sched = schedule(selected_binding, grouped_top_sort)
@@ -69,6 +76,7 @@ def run_instance_steepest_descent(graph_instance, processor_count, node_count, m
     if ret_value is not None:
         ret_value["makespan"] = selected_makespan
         ret_value["sched"] = selected_sched
+        ret_value["timeout"] = timeout
     return (selected_makespan, selected_sched), bindings_solved, solve_end-solve_start
 
 
@@ -186,7 +194,13 @@ def run_instance_genetic(graph_instance, processor_count, node_count, monitor, o
     
     steps_with_no_change = 0
     last_avg_population_fitness = 0
+    timeout = False
     while not monitor.timeout():
+        
+        if monitor.timeout():
+            timeout = True
+            break
+        
         for individual in population:
             individual = local_search(
                 individual, grouped_top_sort, processor_count, node_count)
@@ -227,6 +241,7 @@ def run_instance_genetic(graph_instance, processor_count, node_count, monitor, o
     if ret_value is not None:
         ret_value["makespan"] = best_makespan
         ret_value["sched"] = best_sched
+        ret_value["timeout"] = timeout
     return (best_makespan, best_sched), bindings_solved, solve_end-solve_start
 
 
